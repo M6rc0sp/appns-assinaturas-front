@@ -99,8 +99,8 @@ onMounted(() => {
     <div v-else-if="shopper" class="detail-card">
       <div class="detail-header">
         <h2>{{ shopper.name }}</h2>
-        <div class="badge" :class="shopper.asaas_customer_id ? 'badge-active' : 'badge-pending'">
-          {{ shopper.asaas_customer_id ? 'Sincronizado' : 'Não Sincronizado' }}
+        <div class="badge" :class="shopper.payments_customer_id ? 'badge-active' : 'badge-pending'">
+          {{ shopper.payments_customer_id ? 'Sincronizado' : 'Não Sincronizado' }}
         </div>
       </div>
 
@@ -160,7 +160,7 @@ onMounted(() => {
         </div>
         <div class="detail-row">
           <span class="detail-label">ID no Asaas:</span>
-          <span class="detail-value">{{ shopper.asaas_customer_id || 'Não sincronizado' }}</span>
+          <span class="detail-value">{{ shopper.payments_customer_id || 'Não sincronizado' }}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Criado em:</span>
@@ -170,7 +170,7 @@ onMounted(() => {
           <span class="detail-label">Atualizado em:</span>
           <span class="detail-value">{{ formatDate(shopper.updatedAt) }}</span>
         </div>
-        <div v-if="!shopper.asaas_customer_id" class="synchronize-panel">
+        <div v-if="!shopper.payments_customer_id" class="synchronize-panel">
           <p>Este cliente ainda não foi sincronizado com o Asaas.</p>
           <button @click="handleSyncWithAsaas" class="btn-sync" :disabled="syncing">
             {{ syncing ? 'Sincronizando...' : 'Sincronizar com Asaas' }}

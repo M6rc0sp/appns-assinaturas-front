@@ -287,7 +287,7 @@ function handleError(err: any, defaultMessage: string) {
       </div>
       
       <!-- Etapa 3: Revisão do pedido -->
-      <div v-else-if="currentStep === Step.REVIEW_ORDER" class="step-panel">
+      <div v-else-if="currentStep === Step.REVIEW_ORDER" class="step-panel step-panel-review">
         <h2>Revisar e criar pedido</h2>
         
         <div class="order-review">
@@ -567,6 +567,13 @@ h2 {
   margin-bottom: 2rem;
 }
 
+/* Estilo específico para o painel de revisão que precisa de scroll */
+.step-panel-review {
+  max-height: 69vh;
+  overflow: auto;
+  position: relative;
+}
+
 .step-actions {
   display: flex;
   justify-content: space-between;
@@ -825,6 +832,10 @@ h2 {
   .confirmation-details {
     flex-direction: column;
     gap: 1rem;
+  }
+  
+  .step-panel-review {
+    max-height: 80vh; /* Um pouco maior em telas pequenas para melhor visibilidade */
   }
 }
 

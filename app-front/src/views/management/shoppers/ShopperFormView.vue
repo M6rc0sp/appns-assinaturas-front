@@ -17,7 +17,8 @@ const formData = ref<Partial<Shopper>>({
   addressNumber: '',
   province: '',
   postalCode: '',
-  birthDate: ''
+  birthDate: '',
+  nuvemshop_id: '0'
 });
 
 const loading = ref(false);
@@ -94,7 +95,8 @@ const isFormValid = computed(() => {
     !!formData.value.email &&
     !!formData.value.cpfCnpj &&
     validateCpfCnpj() &&
-    !!formData.value.mobilePhone
+    !!formData.value.mobilePhone &&
+    !!formData.value.nuvemshop_id
   );
 });
 
@@ -183,6 +185,20 @@ onMounted(() => {
             v-model="formData.birthDate" 
             class="form-control"
           />
+        </div>
+
+        <div class="form-group">
+          <label for="nuvemshop_id">ID da Nuvemshop <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="nuvemshop_id" 
+            v-model="formData.nuvemshop_id" 
+            class="form-control"
+            required
+          />
+          <small class="form-help">
+            Digite apenas números. Valor fictício para fins de integração futura com a Nuvemshop.
+          </small>
         </div>
       </div>
       

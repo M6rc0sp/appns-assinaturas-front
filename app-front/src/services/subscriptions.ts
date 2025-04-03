@@ -26,15 +26,34 @@ interface BaseSubscription {
   updatedAt: string;
 }
 
+// Interface para representar um cliente (shopper)
+export interface ShopperData {
+  id: number;
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  mobilePhone: string;
+}
+
+// Interface para representar um vendedor (seller)
+export interface SellerData {
+  id: number;
+  name: string;
+  nuvemshop_id?: string;
+  app_status?: string;
+}
+
 // Interface específica para assinaturas de compradores
 export interface ShopperSubscription extends BaseSubscription {
   shopper_id: number;
   order_id: number;
+  shopper?: ShopperData; // Dados do cliente que podem vir no join
 }
 
 // Interface específica para assinaturas de vendedores
 export interface SellerSubscription extends BaseSubscription {
   seller_id: number;
+  seller?: SellerData; // Dados do vendedor que podem vir no join
 }
 
 // Tipo união para representar qualquer tipo de assinatura

@@ -13,7 +13,7 @@ export interface Shopper {
   province?: string;
   postalCode?: string;
   birthDate?: string;
-  asaas_customer_id?: string;
+  payments_customer_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }

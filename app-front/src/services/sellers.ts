@@ -7,7 +7,7 @@ export interface Seller {
   nuvemshop_api_token?: string;
   app_start_date?: string;
   app_status?: string;
-  asaas_customer_id?: string;
+  payments_customer_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }

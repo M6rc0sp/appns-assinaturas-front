@@ -109,9 +109,9 @@ onMounted(() => {
         <h3>Integração Asaas</h3>
         <div class="detail-row">
           <span class="detail-label">ID no Asaas:</span>
-          <span class="detail-value">{{ seller.asaas_customer_id || 'Não sincronizado' }}</span>
+          <span class="detail-value">{{ seller.payments_customer_id || 'Não sincronizado' }}</span>
         </div>
-        <div v-if="!seller.asaas_customer_id" class="synchronize-panel">
+        <div v-if="!seller.payments_customer_id" class="synchronize-panel">
           <p>Este vendedor ainda não foi sincronizado com o Asaas.</p>
           <button @click="handleSyncWithAsaas" class="btn-sync" :disabled="syncing">
             {{ syncing ? 'Sincronizando...' : 'Sincronizar com Asaas' }}

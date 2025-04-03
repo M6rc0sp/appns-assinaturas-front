@@ -15,7 +15,7 @@ const filteredSellers = computed(() => {
   return sellers.value.filter(seller => 
     seller.name?.toLowerCase().includes(term) || 
     seller.nuvemshop_id?.toString().includes(term) ||
-    seller.asaas_customer_id?.toLowerCase().includes(term)
+    seller.payments_customer_id?.toLowerCase().includes(term)
   );
 });
 
@@ -105,7 +105,7 @@ onMounted(() => {
             <td>{{ seller.id }}</td>
             <td>{{ seller.name || 'N/A' }}</td>
             <td>{{ seller.nuvemshop_id || 'N/A' }}</td>
-            <td>{{ seller.asaas_customer_id || 'Não sincronizado' }}</td>
+            <td>{{ seller.payments_customer_id || 'Não sincronizado' }}</td>
             <td>{{ seller.app_status || 'N/A' }}</td>
             <td class="actions">
               <RouterLink :to="`/management/sellers/${seller.id}`" class="btn-view">
