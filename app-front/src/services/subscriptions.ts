@@ -1,7 +1,5 @@
 import { handleApiResponse, handleApiError, buildApiUrl, fetchWithTimeout } from './apiUtils';
 
-const API_BASE_URL = 'http://localhost:10000';
-
 export enum SubscriptionType {
   SHOPPER = 'shopper',
   SELLER = 'seller'
@@ -77,6 +75,58 @@ export interface LegacySubscription {
 }
 
 /**
+ * Cria uma assinatura para um comprador
+ * @param shopperData Dados do comprador e detalhes da assinatura
+ * @returns Detalhes da assinatura criada
+ */
+export async function createShopperSubscription(shopperData: any): Promise<any> {
+  try {
+    const endpoint = 'app/shopper-subscriptions';
+    
+    const response = await fetchWithTimeout(buildApiUrl(endpoint), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(shopperData)
+    });
+    
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      return handleApiError(response, responseText);
+    }
+    
+    return responseText ? JSON.parse(responseText) : null;
+  } catch (error) {
+    console.error('Erro ao criar assinatura para o comprador:', error);
+    throw error;
+  }
+}
+
+/**
+ * Cria uma assinatura para um comprador a partir de um pedido existente
+ * @param orderId ID do pedido
+ * @returns Detalhes da assinatura criada
+ */
+export async function createShopperSubscriptionFromOrder(orderId: string | number): Promise<any> {
+  try {
+    // Corrigido para o endpoint correto
+    const endpoint = `app/shopper-subscriptions/order/${orderId}`;
+    const response = await fetchWithTimeout(buildApiUrl(endpoint), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Erro ao criar assinatura a partir do pedido:', error);
+    throw error;
+  }
+}
+
+/**
  * Busca assinaturas conforme o tipo especificado (shopper ou seller)
  * @param type Tipo de assinatura (SHOPPER ou SELLER)
  * @returns Lista de assinaturas
@@ -95,6 +145,14 @@ export async function fetchSubscriptions(type: SubscriptionType = SubscriptionTy
     console.error(`Erro ao buscar assinaturas (${type}):`, error);
     return [];
   }
+}
+
+/**
+ * Busca assinaturas específicas de compradores
+ * @returns Lista de assinaturas de compradores
+ */
+export async function fetchShopperSubscriptions(shopperId: number): Promise<ShopperSubscription[]> {
+  return fetchSubscriptions(SubscriptionType.SHOPPER) as Promise<ShopperSubscription[]>;
 }
 
 /**
@@ -148,8 +206,8 @@ export async function fetchSubscriptionsByCustomer(
   try {
     // URL é diferente dependendo do tipo de assinatura
     const endpoint = type === SubscriptionType.SHOPPER 
-      ? `app/shopper-subscriptions/shopper/${customerId}`
-      : `app/seller-subscriptions/seller/${customerId}`;
+      ? `app/shopper-subscriptions/customer/${customerId}`
+      : `app/seller-subscriptions/customer/${customerId}`;
     
     const response = await fetchWithTimeout(buildApiUrl(endpoint));
     
@@ -161,57 +219,61 @@ export async function fetchSubscriptionsByCustomer(
 }
 
 /**
- * Cancela uma assinatura pelo ID
- * @param id ID da assinatura (string ou número)
+ * Cancela uma assinatura
+ * @param subscriptionId ID da assinatura
  * @param type Tipo de assinatura (SHOPPER ou SELLER)
- * @returns Se o cancelamento foi bem-sucedido
+ * @returns Detalhes da resposta da API
  */
 export async function cancelSubscription(
-  id: string | number, 
+  subscriptionId: string | number,
   type: SubscriptionType = SubscriptionType.SHOPPER
-): Promise<boolean> {
+): Promise<any> {
   try {
+    // URL é diferente dependendo do tipo de assinatura
     const endpoint = type === SubscriptionType.SHOPPER 
-      ? `app/shopper-subscriptions/${id}`
-      : `app/seller-subscriptions/${id}`;
-    
-    const response = await fetchWithTimeout(buildApiUrl(endpoint), {
-      method: 'DELETE',
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.error(`Erro ao cancelar assinatura ${id} (${type}):`, error);
-    return false;
-  }
-}
-
-/**
- * Cria uma assinatura de shopper com base em um pedido existente
- * @param orderId ID do pedido
- * @returns Detalhes da assinatura criada
- */
-export async function createShopperSubscriptionFromOrder(orderId: number): Promise<any> {
-  try {
-    const endpoint = `app/shopper-subscriptions/order/${orderId}`;
+      ? `app/shopper-subscriptions/${subscriptionId}/cancel`
+      : `app/seller-subscriptions/${subscriptionId}/cancel`;
     
     const response = await fetchWithTimeout(buildApiUrl(endpoint), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({})
+      }
     });
     
-    const responseText = await response.text();
-    
-    if (!response.ok) {
-      return handleApiError(response, responseText);
-    }
-    
-    return responseText ? JSON.parse(responseText) : null;
+    return handleApiResponse(response);
   } catch (error) {
-    console.error(`Erro ao criar assinatura para o pedido ${orderId}:`, error);
+    console.error(`Erro ao cancelar assinatura ${subscriptionId} (${type}):`, error);
+    throw error;
+  }
+}
+
+/**
+ * Reativa uma assinatura cancelada
+ * @param subscriptionId ID da assinatura
+ * @param type Tipo de assinatura (SHOPPER ou SELLER)
+ * @returns Detalhes da resposta da API
+ */
+export async function reactivateSubscription(
+  subscriptionId: string | number,
+  type: SubscriptionType = SubscriptionType.SHOPPER
+): Promise<any> {
+  try {
+    // URL é diferente dependendo do tipo de assinatura
+    const endpoint = type === SubscriptionType.SHOPPER 
+      ? `app/shopper-subscriptions/${subscriptionId}/reactivate`
+      : `app/seller-subscriptions/${subscriptionId}/reactivate`;
+    
+    const response = await fetchWithTimeout(buildApiUrl(endpoint), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error(`Erro ao reativar assinatura ${subscriptionId} (${type}):`, error);
     throw error;
   }
 }

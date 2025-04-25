@@ -140,7 +140,6 @@ import { formatCurrency } from '@/utils/formatters';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { 
   cancelSubscription, 
-  reactivateSubscription,
   fetchShopperSubscriptions,
   SubscriptionType,
   type Subscription
@@ -325,45 +324,8 @@ async function confirmCancelSubscription() {
 
 // Reativa a assinatura
 async function confirmReactivateSubscription() {
-  if (!activeSubscription.value) return;
-  
-  try {
-    canceling.value = true; // Reaproveitando o mesmo estado para indicar processamento
-    error.value = null;
-    
-    // Chamando a API para reativar a assinatura
-    const response = await reactivateSubscription(activeSubscription.value.id);
-    
-    if (response) {
-      // Atualizando o status localmente após reativação bem-sucedida
-      activeSubscription.value.status = 'active';
-      activeSubscription.value.end_date = null;
-      
-      // Também atualizamos no array de assinaturas
-      const index = userSubscriptions.value.findIndex(s => s.id === activeSubscription.value?.id);
-      if (index !== -1) {
-        userSubscriptions.value[index].status = 'active';
-        userSubscriptions.value[index].end_date = null;
-      }
-      
-      // Atualiza no localStorage para compatibilidade
-      const orderData = localStorage.getItem('appns_last_order');
-      if (orderData) {
-        const parsedOrder = JSON.parse(orderData);
-        parsedOrder.status = 'active';
-        localStorage.setItem('appns_last_order', JSON.stringify(parsedOrder));
-      }
-    } else {
-      error.value = 'Não foi possível reativar a assinatura. Por favor, tente novamente.';
-    }
-  } catch (err) {
-    console.error('Erro ao reativar assinatura:', err);
-    error.value = 'Ocorreu um erro ao reativar sua assinatura. Por favor, tente novamente.';
-  } finally {
-    canceling.value = false;
-  }
+  error.value = 'A funcionalidade de reativação de assinatura não está disponível no momento.';
 }
-
 // Redireciona para o catálogo
 function goToCatalog() {
   router.push('/catalog');
