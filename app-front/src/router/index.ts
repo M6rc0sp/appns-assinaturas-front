@@ -21,9 +21,10 @@ import CatalogView from '@/views/public/CatalogView.vue'
 import CheckoutView from '@/views/public/CheckoutView.vue'
 import SuccessView from '@/views/public/SuccessView.vue'
 import ManageSubscriptionsView from '@/views/public/ManageSubscriptionsView.vue'
+import DirectCheckoutView from '../views/public/DirectCheckoutView.vue'
 
 // Define as rotas públicas - apenas essas serão acessíveis sem autenticação
-const publicRoutes = ['public-catalog', 'public-checkout', 'public-success', 'login', 'register']
+const publicRoutes = ['public-catalog', 'public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register']
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -84,6 +85,11 @@ const router = createRouter({
       path: '/success',
       name: 'public-success',
       component: SuccessView
+    },
+    {
+      path: '/checkout-direto/:productId',
+      name: 'public-direct-checkout',
+      component: DirectCheckoutView
     },
     {
       path: '/manage',

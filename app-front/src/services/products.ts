@@ -18,6 +18,46 @@ export interface Product {
   updated_at: string;
 }
 
+// Interface para o formato da API atual
+export interface ApiProduct {
+  id: number;
+  seller_id: string | number;
+  name: string;
+  description?: string;
+  price: number;
+  stock?: number;
+  sku?: string;
+  categories?: string;
+  images: string[] | null;
+  createdAt?: string;
+  updatedAt?: string;
+  // outros campos possíveis da API
+}
+
+// Função adaptadora para converter o formato da API para o formato esperado pelo front-end
+function adaptProduct(apiProduct: ApiProduct): Product {
+  return {
+    id: apiProduct.id,
+    seller_id: Number(apiProduct.seller_id),
+    name: apiProduct.name,
+    description: apiProduct.description || '',
+    price: apiProduct.price,
+    sale_price: undefined, // A API atual não fornece este campo
+    images: apiProduct.images || [], // Se for null, use array vazio
+    variations: apiProduct.categories ? apiProduct.categories.split(' > ') : [],
+    cycle: BillingCycle.MONTHLY, // Definindo um valor padrão
+    active: true, // Definindo um valor padrão
+    featured: false, // Definindo um valor padrão
+    created_at: apiProduct.createdAt || new Date().toISOString(),
+    updated_at: apiProduct.updatedAt || new Date().toISOString()
+  };
+}
+
+// Função para adaptar um array de produtos da API
+function adaptProductList(apiProducts: ApiProduct[]): Product[] {
+  return apiProducts.map(adaptProduct);
+}
+
 export interface CartItem {
   product: Product;
   quantity: number;
@@ -70,7 +110,7 @@ export async function fetchProducts(): Promise<Product[]> {
   try {
     const response = await fetchWithTimeout(buildApiUrl('app/products'));
     const data = await handleApiResponse(response);
-    return data as Product[];
+    return Array.isArray(data) ? adaptProductList(data) : [];
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
     return [];
@@ -86,7 +126,7 @@ export async function fetchPublicProducts(): Promise<Product[]> {
     // Utiliza a mesma API de produtos, mas poderia ter uma API específica para produtos públicos
     const response = await fetchWithTimeout(buildApiUrl('app/products/public'));
     const data = await handleApiResponse(response);
-    return data as Product[];
+    return Array.isArray(data) ? adaptProductList(data) : [];
   } catch (error) {
     console.error('Erro ao buscar produtos públicos:', error);
     // Retorna uma lista vazia em vez de produtos mockados
@@ -97,12 +137,27 @@ export async function fetchPublicProducts(): Promise<Product[]> {
 /**
  * Busca um produto pelo ID
  * @param id ID do produto
- * @returns Detalhes do produto
+ * @returns Detalhes do produto ou null se não encontrado
  */
 export async function fetchProductById(id: number): Promise<Product | null> {
   try {
     const response = await fetchWithTimeout(buildApiUrl(`app/products/${id}`));
-    return handleApiResponse(response) as unknown as Promise<Product>;
+    const data = await handleApiResponse(response);
+    
+    // Verificar se a resposta indica erro (formato específico da API)
+    if (data && typeof data === 'object' && 'success' in data && data.success === false) {
+      const message = typeof (data as any).message === 'string' ? (data as any).message : 'ID inexistente';
+      console.error(`Produto não encontrado: ${message}`);
+      return null;
+    }
+    
+    // Verificar se temos dados válidos para criar um produto
+    if (data && typeof data === 'object' && 'id' in data) {
+      return adaptProduct(data as ApiProduct);
+    }
+    
+    console.error('Formato de resposta inválido:', data);
+    return null;
   } catch (error) {
     console.error(`Erro ao buscar produto ${id}:`, error);
     return null;

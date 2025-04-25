@@ -37,7 +37,7 @@ export async function fetchWithTimeout(
 /**
  * Processa a resposta da API e extrai os dados independente da estrutura
  */
-export async function handleApiResponse<T>(response: Response): Promise<T[]> {
+export async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     throw new Error(`Error: ${response.status}`);
   }
@@ -46,17 +46,21 @@ export async function handleApiResponse<T>(response: Response): Promise<T[]> {
   
   // Tenta extrair os dados do formato mais comum para o mais específico
   if (Array.isArray(data)) {
-    return data;
+    return data as T;
   } else if (data && Array.isArray(data.data)) {
-    return data.data;
+    return data.data as T;
   } else if (data && data.data && Array.isArray(data.data.data)) {
-    return data.data.data;
+    return data.data.data as T;
   } else if (data && data.success && Array.isArray(data.data)) {
-    return data.data;
+    return data.data as T;
+  } else if (data && data.success && data.data && typeof data.data === 'object') {
+    // Novo caso: quando a resposta é {success: true, data: {objeto}}
+    return data.data as T;
   }
   
-  console.warn('Formato de resposta inesperado:', data);
-  return [];
+  // Se nenhum dos formatos acima for reconhecido, retorna o próprio data
+  console.warn('Formato de resposta inesperado, usando dados brutos:', data);
+  return data as T;
 }
 
 /**
