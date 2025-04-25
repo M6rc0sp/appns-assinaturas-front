@@ -17,4 +17,22 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // Desabilitar o cache do módulo para evitar problemas com importações
+  optimizeDeps: {
+    force: true
+  },
+  server: {
+    port: 5174,
+    hmr: true,
+    watch: {
+      usePolling: true
+    },
+    proxy: {
+      '/api': {
+        target: 'http://206.189.224.24:10000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
 })

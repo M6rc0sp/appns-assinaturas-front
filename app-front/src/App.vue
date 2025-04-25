@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
-import { watch } from 'vue';
+import { watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 import TheHeader from './components/layout/TheHeader.vue';
 import TheFooter from './components/layout/TheFooter.vue';
 
@@ -9,6 +10,12 @@ import TheFooter from './components/layout/TheFooter.vue';
 const route = useRoute();
 watch(() => route.path, () => {
   window.scrollTo(0, 0);
+});
+
+// Inicializar a autenticação na inicialização do app
+const authStore = useAuthStore();
+onMounted(() => {
+  authStore.initialize();
 });
 </script>
 
@@ -48,7 +55,9 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 99.8vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* Container centralizado (estilo Bootstrap) */
@@ -59,12 +68,13 @@ body {
   padding: 0 1rem;
 }
 
-/* Conteúdo principal */
+/* Conteúdo principal - AGORA COM MAX-HEIGHT */
 .content {
-  flex: 1;
+  flex: 1 1 auto; /* Allow grow/shrink, but max-height will limit growth */
+  max-height: 91vh; /* Define a altura máxima */
+  overflow-y: auto; /* Enable vertical scroll ONLY for content */
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 1rem; 
 }
 
 /* Estilos responsivos */

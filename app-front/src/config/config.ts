@@ -3,7 +3,7 @@
  */
 
 /** URL base da API */
-export const API_BASE_URL = 'http://localhost:10000';
+export const API_BASE_URL = '/api';
 
 /** Configurações padrão para requisições fetch */
 export const DEFAULT_FETCH_OPTIONS = {
@@ -44,4 +44,19 @@ export enum PaymentMethod {
   BOLETO = 'BOLETO',
   CREDIT_CARD = 'CREDIT_CARD',
   PIX = 'PIX'
+}
+
+/** Funções de usuário */
+export enum UserRole {
+  ADMIN = 'admin',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+/** Configurações de autenticação */
+export const AUTH_CONFIG = {
+  /** Chave para armazenamento no localStorage */
+  STORAGE_KEY: 'appns-auth',
+  /** Tempo de expiração do token em milissegundos (24 horas) */
+  TOKEN_EXPIRATION: 24 * 60 * 60 * 1000
 }
