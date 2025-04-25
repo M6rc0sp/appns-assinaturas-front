@@ -69,7 +69,8 @@ export interface OrderRequest {
 export async function fetchProducts(): Promise<Product[]> {
   try {
     const response = await fetchWithTimeout(buildApiUrl('app/products'));
-    return handleApiResponse(response);
+    const data = await handleApiResponse(response);
+    return data as Product[];
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
     return [];

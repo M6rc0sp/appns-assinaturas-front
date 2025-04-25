@@ -117,9 +117,7 @@ onMounted(() => {
         <div class="shopper-email">{{ selectedShopper.email }}</div>
         <div class="shopper-detail">CPF/CNPJ: {{ selectedShopper.cpfCnpj }}</div>
         <div class="shopper-detail">Telefone: {{ selectedShopper.mobilePhone }}</div>
-        <div v-if="selectedShopper.asaas_customer_id" class="shopper-detail">
-          ID no Asaas: {{ selectedShopper.asaas_customer_id }}
-        </div>
+        <!-- Removida referência à propriedade que não existe no tipo Shopper -->
       </div>
     </div>
   </div>
