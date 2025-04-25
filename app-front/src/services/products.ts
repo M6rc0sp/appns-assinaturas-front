@@ -85,57 +85,12 @@ export async function fetchPublicProducts(): Promise<Product[]> {
   try {
     // Utiliza a mesma API de produtos, mas poderia ter uma API específica para produtos públicos
     const response = await fetchWithTimeout(buildApiUrl('app/products/public'));
-    return handleApiResponse(response);
+    const data = await handleApiResponse(response);
+    return data as Product[];
   } catch (error) {
     console.error('Erro ao buscar produtos públicos:', error);
-    // Em caso de erro, retorna alguns produtos de exemplo para não quebrar a UI
-    return [
-      {
-        id: 1,
-        seller_id: 1,
-        name: 'Café Colonial',
-        description: 'Um café especial direto da fazenda',
-        price: 89.90,
-        sale_price: 59.90,
-        images: ['https://mercafefaststore.vtexassets.com/arquivos/ids/550089/Cafe_Torrado_e_Moido_3_Coracoes_Estrada_Real_Premium_Pacot.png'],
-        variations: ['Café', 'Café com leite'],
-        cycle: BillingCycle.MONTHLY,
-        active: true,
-        featured: true,
-        created_at: '2025-01-15T10:00:00Z',
-        updated_at: '2025-01-15T10:00:00Z'
-      },
-      {
-        id: 2,
-        seller_id: 1,
-        name: 'Chá Premium',
-        description: 'Chá de ervas selecionadas',
-        price: 49.90,
-        sale_price: 39.90,
-        images: ['https://www.emporiotambo.com.br/wp-content/uploads/2020/07/Cha_Verde_Menta_Leao_Lata_150g_Imagem_1.png'],
-        variations: ['Hortelã', 'Camomila', 'Erva-doce'],
-        cycle: BillingCycle.MONTHLY,
-        active: true,
-        featured: false,
-        created_at: '2025-02-10T14:30:00Z',
-        updated_at: '2025-02-10T14:30:00Z'
-      },
-      {
-        id: 3,
-        seller_id: 1,
-        name: 'Kit Degustação',
-        description: 'Um kit completo para os amantes de bebidas',
-        price: 129.90,
-        sale_price: 99.90,
-        images: ['https://novonegocio.com.br/wp-content/uploads/2013/11/Clube-de-Assinatura-de-Cafe.jpg'],
-        variations: ['Kit básico', 'Kit completo'],
-        cycle: BillingCycle.MONTHLY,
-        active: true,
-        featured: true,
-        created_at: '2025-03-05T09:15:00Z',
-        updated_at: '2025-03-05T09:15:00Z'
-      }
-    ];
+    // Retorna uma lista vazia em vez de produtos mockados
+    return [];
   }
 }
 
@@ -147,7 +102,7 @@ export async function fetchPublicProducts(): Promise<Product[]> {
 export async function fetchProductById(id: number): Promise<Product | null> {
   try {
     const response = await fetchWithTimeout(buildApiUrl(`app/products/${id}`));
-    return handleApiResponse(response);
+    return handleApiResponse(response) as unknown as Promise<Product>;
   } catch (error) {
     console.error(`Erro ao buscar produto ${id}:`, error);
     return null;
