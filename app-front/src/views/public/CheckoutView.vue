@@ -172,7 +172,7 @@ async function searchAddressByZipCode() {
 }
 
 function backToCatalog() {
-  router.push('/catalog');
+  // router.push('/catalog'); // Removido catálogo
 }
 
 async function submitOrder() {
@@ -305,7 +305,7 @@ async function submitOrder() {
 // Verificar se há itens no carrinho ao carregar a página
 onMounted(() => {
   if (cartStore.totalItems === 0) {
-    router.push('/catalog');
+    // router.push('/catalog'); // Removido catálogo
   }
 });
 </script>

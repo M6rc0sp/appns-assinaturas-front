@@ -49,8 +49,8 @@ function logout() {
             <li><RouterLink to="/about" @click="closeMenu" :class="{ active: route.path.startsWith('/about') }">Sobre</RouterLink></li>
           </template>
           
-          <!-- Link de catálogo visível para todos -->
-          <li><RouterLink to="/catalog" @click="closeMenu" :class="{ active: route.path.startsWith('/catalog') }">Catálogo</RouterLink></li>
+          <!-- Link de catálogo removido -->
+          <!-- <li><RouterLink to="/catalog" @click="closeMenu" :class="{ active: route.path.startsWith('/catalog') }">Catálogo</RouterLink></li> -->
         </ul>
         
         <!-- Área de autenticação -->
@@ -62,8 +62,8 @@ function logout() {
             </div>
           </template>
           <template v-else>
-            <RouterLink to="/auth/login" @click="closeMenu" class="auth-button login">Login</RouterLink>
-            <RouterLink to="/auth/register" @click="closeMenu" class="auth-button register">Cadastre-se</RouterLink>
+            <!-- <RouterLink to="/auth/login" @click="closeMenu" class="auth-button login">Login</RouterLink> -->
+            <!-- <RouterLink to="/auth/register" @click="closeMenu" class="auth-button register">Cadastre-se</RouterLink> -->
           </template>
         </div>
       </nav>

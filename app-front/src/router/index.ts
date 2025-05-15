@@ -15,16 +15,14 @@ import ShopperDetailView from '../views/management/shoppers/ShopperDetailView.vu
 import ShopperFormView from '../views/management/shoppers/ShopperFormView.vue'
 import OrderListView from '../views/management/orders/OrderListView.vue'
 import OrderDetailView from '../views/management/orders/OrderDetailView.vue'
-
-// Páginas públicas de assinatura para guests
-import CatalogView from '@/views/public/CatalogView.vue'
+// import CatalogView from '@/views/public/CatalogView.vue' // Removido catálogo
 import CheckoutView from '@/views/public/CheckoutView.vue'
 import SuccessView from '@/views/public/SuccessView.vue'
 import ManageSubscriptionsView from '@/views/public/ManageSubscriptionsView.vue'
 import DirectCheckoutView from '../views/public/DirectCheckoutView.vue'
 
 // Define as rotas públicas - apenas essas serão acessíveis sem autenticação
-const publicRoutes = ['public-catalog', 'public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register']
+const publicRoutes = ['public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register'] // Removido 'public-catalog'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,31 +31,31 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true }, // Protege a página inicial
+      meta: { requiresAuth: true },
     },
     {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
-      meta: { requiresAuth: true }, // Protege a página about
+      meta: { requiresAuth: true },
     },
     {
       path: '/subscriptions',
       name: 'subscriptions',
       component: SubscriptionListView,
-      meta: { requiresAuth: true }, // Protege a lista de assinaturas
+      meta: { requiresAuth: true },
     },
     {
       path: '/subscriptions/:id',
       name: 'subscription-details',
       component: SubscriptionDetailView,
-      meta: { requiresAuth: true }, // Protege os detalhes de assinaturas
+      meta: { requiresAuth: true },
     },
     {
       path: '/simulate',
       name: 'simulate-subscription',
       component: SimulateSubscriptionView,
-      meta: { requiresAuth: true }, // Protege a simulação de assinaturas
+      meta: { requiresAuth: true },
     },
     // Rotas de autenticação - permanecem públicas para permitir login/registro
     {
@@ -71,11 +69,7 @@ const router = createRouter({
       component: RegisterView
     },
     // Rotas públicas para assinantes (guests)
-    {
-      path: '/catalog',
-      name: 'public-catalog',
-      component: CatalogView
-    },
+    // Catálogo removido
     {
       path: '/checkout',
       name: 'public-checkout',
@@ -95,7 +89,7 @@ const router = createRouter({
       path: '/manage',
       name: 'public-manage',
       component: ManageSubscriptionsView,
-      meta: { requiresAuth: true }, // Protege o gerenciamento público de assinaturas
+      meta: { requiresAuth: true },
     },
     // Rotas protegidas de gerenciamento
     {
@@ -159,27 +153,21 @@ const router = createRouter({
         }
       ]
     },
-    // Redireciona qualquer rota não definida para o catálogo
+    // Redireciona qualquer rota não definida para a home
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/catalog'
+      redirect: '/'
     }
   ],
 })
 
 // Guarda de navegação para verificar autenticação
 router.beforeEach((to, from, next) => {
-  // Inicializa a store de autenticação para carregar dados do localStorage
   const authStore = useAuthStore()
   authStore.initialize()
-  
-  // Verifica se a rota requer autenticação (todas exceto as listadas em publicRoutes)
   const requiresAuth = to.meta.requiresAuth !== false && !publicRoutes.includes(to.name as string)
-  
-  // Se a rota requer autenticação e o usuário não está autenticado,
-  // redireciona para o catálogo
   if (requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'public-catalog' })
+    next({ name: 'home' }) // Redireciona para home se não autenticado
   } else {
     next()
   }

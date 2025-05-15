@@ -61,7 +61,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
         <div class="feature-card">
           <h3>Área do Cliente</h3>
           <p>Acesse o catálogo de produtos disponíveis para assinatura e gerencie suas assinaturas.</p>
-          <router-link to="/public/catalog" class="btn btn-success">Acessar Catálogo</router-link>
+          <!-- <router-link to="/public/catalog" class="btn btn-success">Acessar Catálogo</router-link> -->
         </div>
       </div>
 

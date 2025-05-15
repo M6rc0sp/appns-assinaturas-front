@@ -36,7 +36,7 @@ function goToManageSubscriptions() {
 
 // Volta para o catálogo de produtos
 function goToCatalog() {
-  router.push('/catalog');
+  // router.push('/catalog'); // Removido catálogo
 }
 </script>
 
@@ -99,11 +99,11 @@ function goToCatalog() {
       
       <div class="no-order" v-else>
         <p>Nenhuma informação de pedido encontrada.</p>
-        <p>Por favor, retorne para a <router-link to="/public/catalog">página de catálogo</router-link>.</p>
+        <!-- <p>Por favor, retorne para a <router-link to="/public/catalog">página de catálogo</router-link>.</p> -->
       </div>
       
       <div class="actions">
-        <button class="primary-button" @click="goToCatalog">Voltar para o Catálogo</button>
+        <!-- <button class="primary-button" @click="goToCatalog">Voltar para o Catálogo</button> -->
         <button class="secondary-button" @click="goToManageSubscriptions">Gerenciar Assinaturas</button>
       </div>
     </div>

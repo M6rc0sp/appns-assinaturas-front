@@ -117,7 +117,6 @@
         </svg>
         <h3>Nenhuma assinatura encontrada</h3>
         <p>Você ainda não possui assinaturas ativas.</p>
-        <button class="primary-button" @click="goToCatalog">Explorar Catálogo</button>
       </div>
     </div>
     
@@ -325,10 +324,6 @@ async function confirmCancelSubscription() {
 // Reativa a assinatura
 async function confirmReactivateSubscription() {
   error.value = 'A funcionalidade de reativação de assinatura não está disponível no momento.';
-}
-// Redireciona para o catálogo
-function goToCatalog() {
-  router.push('/catalog');
 }
 </script>
 

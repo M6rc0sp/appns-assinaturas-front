@@ -73,9 +73,9 @@ onMounted(() => {
         <p class="error-message">{{ error }}</p>
         <p class="error-instruction">O produto que você está procurando não está disponível ou não existe.</p>
         <div class="mt-4">
-          <router-link to="/catalog" class="btn btn-primary btn-lg">
+          <!-- <router-link to="/catalog" class="btn btn-primary btn-lg">
             Ver outros produtos disponíveis
-          </router-link>
+          </router-link> -->
         </div>
       </div>
       
