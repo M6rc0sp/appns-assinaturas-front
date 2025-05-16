@@ -15,7 +15,7 @@ const cartStore = useCartStore();
 const formData = ref({
   fullName: '',
   email: '',
-  confirmEmail: '',
+  // confirmEmail: '', // Removido campo de confirmação
   document: '',
   phone: '',
   birthdate: '',
@@ -50,8 +50,6 @@ const finalPrice = computed(() => cartStore.finalPrice);
 const canProceedToStep2 = computed(() => {
   return formData.value.fullName && 
     formData.value.email && 
-    formData.value.confirmEmail && 
-    formData.value.email === formData.value.confirmEmail &&
     formData.value.document &&
     formData.value.phone;
 });
@@ -372,22 +370,10 @@ onMounted(() => {
                   <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
                 </div>
                 
-                <div class="col-md-6">
-                  <label for="confirmEmail" class="form-label fw-semibold">Confirme o e-mail</label>
-                  <input 
-                    type="email" 
-                    class="form-control form-control-lg" 
-                    id="confirmEmail"
-                    v-model="formData.confirmEmail"
-                    :class="{ 'is-invalid': errors.confirmEmail || (formData.confirmEmail && formData.email !== formData.confirmEmail) }"
-                  >
-                  <div v-if="formData.confirmEmail && formData.email !== formData.confirmEmail" class="invalid-feedback">
-                    Os e-mails não conferem
-                  </div>
-                </div>
+                <!-- Removido campo de confirmação de e-mail -->
                 
                 <div class="col-md-6">
-                  <label for="document" class="form-label fw-semibold">CPF</label>
+                  <label for="document" class="form-label fw-semibold">CPF/CNPJ</label>
                   <input 
                     type="text" 
                     class="form-control form-control-lg" 
@@ -426,12 +412,9 @@ onMounted(() => {
               </div>
               
               <div class="d-flex justify-content-between align-items-center mt-5 form-step-actions">
-                <button @click="backToCatalog" class="btn btn-outline-secondary btn-lg px-4">
-                  Voltar ao catálogo
-                </button>
                 <button 
                   @click="goToNextStep" 
-                  class="btn btn-primary btn-lg px-5 ms-3"
+                  class="btn btn-primary btn-lg px-5"
                   :disabled="!canProceedToStep2"
                 >
                   Continuar
@@ -751,24 +734,21 @@ onMounted(() => {
             </div>
 
             <ul class="list-unstyled mb-0 order-summary-list">
-              <li v-for="(item, index) in cartStore.items" :key="index" class="cart-item d-flex align-items-center py-3" :class="{ 'border-bottom': index < cartStore.items.length - 1 }">
-                <img 
-                  :src="item.product.images && item.product.images.length ? item.product.images[0] : 'https://placehold.co/60x60?text=Sem+Imagem'"
-                  class="img-fluid cart-item-image me-3" 
-                  :alt="item.product.name"
-                >
-                <div class="flex-grow-1 me-2">
-                  <div class="cart-item-name">{{ item.product.name }}</div>
-                  <div class="cart-item-price">{{ formatCurrency(item.product.sale_price || item.product.price) }}/mês</div>
+              <li v-for="(item, index) in cartStore.items" :key="index" class="cart-item order-summary-flex align-items-center py-3" :class="{ 'border-bottom': index < cartStore.items.length - 1 }">
+                <div class="order-summary-img-wrap">
+                  <img 
+                    :src="item.product.images && item.product.images.length ? item.product.images[0] : 'https://placehold.co/60x60?text=Sem+Imagem'"
+                    class="img-fluid cart-item-image" 
+                    :alt="item.product.name"
+                  >
                 </div>
-                <button 
-                  class="btn btn-sm btn-danger cart-item-remove-btn d-flex align-items-center"
-                  title="Remover produto" 
-                  @click="cartStore.removeFromCart(item.product.id)"
-                >
-                  <span class="material-symbols-outlined me-1">delete</span> <!-- Added icon -->
-                  Remover
-                </button>
+                <div class="flex-grow-1 order-summary-info ms-3">
+                  <div class="cart-item-name fw-semibold" style="font-size: 1.05rem;">{{ item.product.name }}</div>
+                  <div class="cart-item-description text-muted" v-if="item.product.description" style="font-size: 0.92rem; line-height: 1.3;">{{ item.product.description }}</div>
+                </div>
+                <div class="cart-item-price text-end ms-2" style="min-width: 90px;">
+                  <span class="fw-bold" style="font-size: 1.08rem; color: #222;">{{ formatCurrency(item.product.sale_price || item.product.price) }}/mês</span>
+                </div>
               </li>
             </ul>
             
@@ -980,6 +960,12 @@ onMounted(() => {
   line-height: 1.3;
 }
 
+.cart-item-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.1rem;
+}
+
 .cart-item-price {
   font-size: 0.95rem;
   color: #555;
@@ -1086,20 +1072,10 @@ onMounted(() => {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
+  font-feature-settings: 'liga';
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   vertical-align: middle; /* Align icon better with text */
-}
-
-/* Add space between action buttons */
-.form-step-actions {
-  /* justify-content-between já cuida do espaçamento máximo */
-  /* ms-3 no botão da direita adiciona um mínimo */
-}
-
-/* Aumentar margem se ms-3 não for suficiente */
-.form-step-actions .btn-primary {
-   margin-left: 1rem; /* Aumenta a margem esquerda */
 }
 
 /* Remove estilo de lista (Final Attempt) */
@@ -1253,5 +1229,32 @@ onMounted(() => {
   font-size: 1.8rem; /* Increased icon size */
   margin-right: 0.75rem; /* More space between icon and text */
   vertical-align: middle; /* Ensure alignment */
+}
+
+.order-summary-flex {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.75rem;
+}
+.order-summary-img-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+}
+.order-summary-img-wrap img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f0f0f0;
+}
+.order-summary-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 </style>
