@@ -99,12 +99,6 @@ function goToCatalog() {
       
       <div class="no-order" v-else>
         <p>Nenhuma informação de pedido encontrada.</p>
-        <!-- <p>Por favor, retorne para a <router-link to="/public/catalog">página de catálogo</router-link>.</p> -->
-      </div>
-      
-      <div class="actions">
-        <!-- <button class="primary-button" @click="goToCatalog">Voltar para o Catálogo</button> -->
-        <button class="secondary-button" @click="goToManageSubscriptions">Gerenciar Assinaturas</button>
       </div>
     </div>
   </div>
@@ -178,7 +172,6 @@ function goToCatalog() {
   display: flex;
   justify-content: space-between;
   padding: 1rem 0;
-  border-bottom: 1px solid #e1e1e1;
 }
 
 .item-info {
