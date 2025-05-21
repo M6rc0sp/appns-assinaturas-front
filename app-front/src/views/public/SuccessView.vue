@@ -19,8 +19,8 @@ onMounted(() => {
       // Armazenar também em lastOrder para uso futuro na página de gerenciamento
       localStorage.setItem('lastOrder', orderJson);
     } else {
-      // Se não encontrar informações do pedido, redireciona para o catálogo
-      router.push('/catalog');
+      // Se não encontrar informações do pedido, redireciona para uma página de erro amigável
+      router.replace({ name: 'not-found' });
     }
   } catch (error) {
     console.error('Erro ao carregar dados do pedido:', error);
@@ -32,11 +32,6 @@ onMounted(() => {
 // Redireciona para a página de gerenciamento de assinaturas
 function goToManageSubscriptions() {
   router.push('/manage');
-}
-
-// Volta para o catálogo de produtos
-function goToCatalog() {
-  // router.push('/catalog'); // Removido catálogo
 }
 </script>
 
@@ -93,7 +88,7 @@ function goToCatalog() {
           <h3>Informações importantes</h3>
           <p>Sua primeira cobrança foi processada com sucesso. A próxima cobrança ocorrerá automaticamente daqui a 30 dias.</p>
           <p>Você receberá um e-mail com os detalhes da sua assinatura.</p>
-          <p>Para gerenciar sua assinatura, acesse a página <a @click="goToManageSubscriptions">Gerenciar Assinaturas</a>.</p>
+          <p>Para gerenciar sua assinatura, acesse a página <a @click.prevent="goToManageSubscriptions" href="#">Gerenciar Assinaturas</a>.</p>
         </div>
       </div>
       

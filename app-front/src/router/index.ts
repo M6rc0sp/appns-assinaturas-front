@@ -20,6 +20,7 @@ import CheckoutView from '@/views/public/CheckoutView.vue'
 import SuccessView from '@/views/public/SuccessView.vue'
 import ManageSubscriptionsView from '@/views/public/ManageSubscriptionsView.vue'
 import DirectCheckoutView from '../views/public/DirectCheckoutView.vue'
+import NotFoundView from '@/views/public/NotFoundView.vue'
 
 // Define as rotas públicas - apenas essas serão acessíveis sem autenticação
 const publicRoutes = ['public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register'] // Removido 'public-catalog'
@@ -153,10 +154,11 @@ const router = createRouter({
         }
       ]
     },
-    // Redireciona qualquer rota não definida para a home
+    // Redireciona qualquer rota não definida para a página de erro amigável
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/'
+      name: 'not-found',
+      component: NotFoundView
     }
   ],
 })
