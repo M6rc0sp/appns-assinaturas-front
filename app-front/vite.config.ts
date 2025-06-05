@@ -7,7 +7,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/shop/' : '/',  // Base path para build - diferente entre produção e desenvolvimento
+  base: '/shop/',
   plugins: [
     vue(),
     vueJsx(),
