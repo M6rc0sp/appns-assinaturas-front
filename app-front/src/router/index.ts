@@ -21,6 +21,9 @@ import SuccessView from '@/views/public/SuccessView.vue'
 import ManageSubscriptionsView from '@/views/public/ManageSubscriptionsView.vue'
 import DirectCheckoutView from '../views/public/DirectCheckoutView.vue'
 import NotFoundView from '@/views/public/NotFoundView.vue'
+import SetupView from '@/views/public/SetupView.vue'
+import PrivacyPolicyView from '@/views/public/PrivacyPolicyView.vue'
+import SupportView from '@/views/public/SupportView.vue'
 
 // Define as rotas públicas - apenas essas serão acessíveis sem autenticação
 const publicRoutes = ['public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register'] // Removido 'public-catalog'
@@ -91,6 +94,22 @@ const router = createRouter({
       name: 'public-manage',
       component: ManageSubscriptionsView,
       meta: { requiresAuth: true },
+    },
+    // Novas rotas públicas
+    {
+      path: '/setup',
+      name: 'public-setup',
+      component: SetupView
+    },
+    {
+      path: '/politicas-de-privacidade',
+      name: 'public-privacy-policy',
+      component: PrivacyPolicyView
+    },
+    {
+      path: '/suporte',
+      name: 'public-support',
+      component: SupportView
     },
     // Rotas protegidas de gerenciamento
     {
