@@ -26,10 +26,23 @@ import PrivacyPolicyView from '@/views/public/PrivacyPolicyView.vue'
 import SupportView from '@/views/public/SupportView.vue'
 
 // Define as rotas públicas - apenas essas serão acessíveis sem autenticação
-const publicRoutes = ['public-checkout', 'public-success', 'public-direct-checkout', 'login', 'register'] // Removido 'public-catalog'
+const publicRoutes = [
+  'public-checkout', 
+  'public-success', 
+  'public-direct-checkout', 
+  'login', 
+  'register', 
+  'public-setup',
+  'public-privacy-policy',
+  'public-support',
+  'not-found'
+] // Removido 'public-catalog'
+
+// Detecta se estamos em ambiente de produção
+const isProd = import.meta.env.MODE === 'production';
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(isProd ? '/shop/' : '/'),
   routes: [
     {
       path: '/',
