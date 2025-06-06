@@ -6,10 +6,23 @@ import { formatCurrency } from '@/utils/formatters';
 import { createShopperSubscriptionFromOrder } from '@/services/subscriptions';
 import { createOrder } from '@/services/orders'; // Importando o serviço de criação de pedidos
 import { createShopper } from '@/services/shoppers'; // Importando o serviço para criar compradores
+import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import CheckoutDisclaimer from '@/components/ui/CheckoutDisclaimer.vue';
 
 const router = useRouter();
 const cartStore = useCartStore();
+
+// Composable para métodos de pagamento
+const { 
+  availablePaymentMethodsWithLabels, 
+  isLoading: loadingPaymentMethods, 
+  error: paymentMethodsError,
+  fetchPaymentMethods,
+  isMethodAvailable 
+} = usePaymentMethods();
+
+// ID do seller (você pode ajustar isso conforme sua lógica de negócio)
+const SELLER_ID = '1';
 
 // Estado do formulário
 const formData = ref({
@@ -300,10 +313,21 @@ async function submitOrder() {
   }
 }
 
-// Verificar se há itens no carrinho ao carregar a página
-onMounted(() => {
+// Verificar se há itens no carrinho ao carregar a página e buscar métodos de pagamento
+onMounted(async () => {
   if (cartStore.totalItems === 0) {
     // router.push('/catalog'); // Removido catálogo
+  }
+  
+  // Buscar métodos de pagamento disponíveis para o seller
+  await fetchPaymentMethods(SELLER_ID);
+  
+  // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
+  // definir o primeiro método disponível como padrão
+  if (availablePaymentMethodsWithLabels.value.length > 0) {
+    if (!isMethodAvailable(formData.value.paymentMethod)) {
+      formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+    }
   }
 });
 </script>
@@ -570,48 +594,41 @@ onMounted(() => {
               <h4 class="mb-4 checkout-step-title">Forma de pagamento</h4>
               
               <div class="payment-methods mb-4">
-                <div class="form-check form-check-inline payment-option">
-                  <input 
-                    class="form-check-input" 
-                    type="radio" 
-                    name="paymentMethod"
-                    id="creditCardPayment"
-                    value="credit_card"
-                    v-model="formData.paymentMethod"
-                  >
-                  <label class="form-check-label payment-label" for="creditCardPayment">
-                    <span class="material-symbols-outlined me-2">credit_card</span>
-                    Cartão de crédito
-                  </label>
+                <!-- Mensagem de carregamento -->
+                <div v-if="loadingPaymentMethods" class="text-center py-3">
+                  <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                  <span>Carregando métodos de pagamento...</span>
                 </div>
-                <div class="form-check form-check-inline payment-option">
-                  <input 
-                    class="form-check-input" 
-                    type="radio" 
-                    name="paymentMethod"
-                    id="pixPayment"
-                    value="pix"
-                    v-model="formData.paymentMethod"
-                  >
-                  <label class="form-check-label payment-label" for="pixPayment">
-                    <span class="material-symbols-outlined me-2">qr_code_2</span>
-                    PIX
-                  </label>
+                
+                <!-- Erro ao carregar métodos de pagamento -->
+                <div v-else-if="paymentMethodsError" class="alert alert-warning">
+                  {{ paymentMethodsError }}
                 </div>
-                <div class="form-check form-check-inline payment-option">
-                  <input 
-                    class="form-check-input" 
-                    type="radio" 
-                    name="paymentMethod"
-                    id="bankSlipPayment"
-                    value="bank_slip"
-                    v-model="formData.paymentMethod"
-                  >
-                  <label class="form-check-label payment-label" for="bankSlipPayment">
-                    <span class="material-symbols-outlined me-2">receipt_long</span>
-                    Boleto Bancário
-                  </label>
-                </div>
+                
+                <!-- Métodos de pagamento disponíveis -->
+                <template v-else>
+                  <div v-for="method in availablePaymentMethodsWithLabels" 
+                       :key="method.code" 
+                       class="form-check form-check-inline payment-option">
+                    <input 
+                      class="form-check-input" 
+                      type="radio" 
+                      name="paymentMethod"
+                      :id="`${method.code}Payment`"
+                      :value="method.code"
+                      v-model="formData.paymentMethod"
+                    >
+                    <label class="form-check-label payment-label" :for="`${method.code}Payment`">
+                      <span class="material-symbols-outlined me-2">{{ method.icon }}</span>
+                      {{ method.label }}
+                    </label>
+                  </div>
+                  
+                  <!-- Mensagem quando nenhum método está disponível -->
+                  <div v-if="availablePaymentMethodsWithLabels.length === 0" class="alert alert-info">
+                    Nenhum método de pagamento disponível no momento.
+                  </div>
+                </template>
               </div>
               
               <!-- Formulário para cartão de crédito -->
@@ -679,7 +696,7 @@ onMounted(() => {
               </div>
               
               <!-- Instruções para Boleto -->
-              <div v-else-if="formData.paymentMethod === 'bank_slip'" class="bank-slip-instructions">
+              <div v-else-if="formData.paymentMethod === 'boleto' || formData.paymentMethod === 'bank_slip'" class="bank-slip-instructions">
                 <div class="alert alert-info">
                   <p class="mb-0">Após finalizar o pedido, você receberá o boleto bancário por e-mail.</p>
                 </div>

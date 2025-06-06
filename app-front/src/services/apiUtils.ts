@@ -104,3 +104,22 @@ export function buildApiUrl(endpoint: string): string {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   return `${API_BASE_URL}/${cleanEndpoint}`;
 }
+
+/**
+ * Executa uma requisição HTTP genérica para a API
+ * @param endpoint Endpoint da API (ex: '/app/seller/1/payment-methods')
+ * @param options Opções da requisição
+ * @returns Dados tipados da resposta
+ */
+export async function apiRequest<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  const url = buildApiUrl(endpoint);
+  const response = await fetchWithTimeout(url, {
+    ...DEFAULT_FETCH_OPTIONS,
+    ...options
+  });
+  
+  return handleApiResponse<T>(response);
+}
