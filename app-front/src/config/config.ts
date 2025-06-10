@@ -5,6 +5,9 @@
 /** URL base da API */
 export const API_BASE_URL = '/api';
 
+/** URL completa da API para debug e teste direto */
+export const API_FULL_URL = 'https://assinaturas.appns.com.br/api';
+
 /** Configurações padrão para requisições fetch */
 export const DEFAULT_FETCH_OPTIONS = {
   headers: {

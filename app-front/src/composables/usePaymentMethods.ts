@@ -10,22 +10,29 @@ export const usePaymentMethods = () => {
    * Busca os métodos de pagamento disponíveis para um seller
    */
   const fetchPaymentMethods = async (sellerId: string) => {
+    console.log('[DEBUG COMPOSABLE] Iniciando busca de métodos de pagamento para seller:', sellerId);
+    
     if (!sellerId) {
       error.value = 'ID do seller é obrigatório'
+      console.error('[DEBUG COMPOSABLE] ID do seller não fornecido');
       return
     }
 
     isLoading.value = true
     error.value = null
+    console.log('[DEBUG COMPOSABLE] Estado de carregamento definido como true');
 
     try {
+      console.log('[DEBUG COMPOSABLE] Chamando getSellerPaymentMethods com sellerId:', sellerId);
       const methods = await getSellerPaymentMethods(sellerId)
+      console.log('[DEBUG COMPOSABLE] Métodos de pagamento recebidos:', methods);
       availablePaymentMethods.value = methods
     } catch (err) {
       error.value = 'Erro ao carregar métodos de pagamento'
-      console.error('Erro ao buscar métodos de pagamento:', err)
+      console.error('[DEBUG COMPOSABLE] Erro ao buscar métodos de pagamento:', err);
     } finally {
       isLoading.value = false
+      console.log('[DEBUG COMPOSABLE] Estado de carregamento definido como false');
     }
   }
 

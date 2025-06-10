@@ -30,11 +30,23 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:10000',
+        target: 'https://assinaturas.appns.com.br',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // Não reescreva o caminho, mantenha o /api
+        // rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false,
-        timeout: 60000
+        timeout: 60000,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Proxy request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Proxy response:', proxyRes.statusCode, req.url);
+          });
+        }
       }
     }
   }

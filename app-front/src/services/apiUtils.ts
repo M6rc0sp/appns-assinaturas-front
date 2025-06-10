@@ -44,12 +44,58 @@ export async function fetchWithTimeout(
  */
 export async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`Error: ${response.status}`);
+    console.error('[DEBUG API] Resposta HTTP não OK:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url
+    });
+    
+    try {
+      // Tenta ler o corpo da resposta para mostrar detalhes do erro
+      const errorText = await response.text();
+      console.error('[DEBUG API] Corpo da resposta de erro:', errorText);
+      
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('[DEBUG API] Erro JSON parseado:', errorJson);
+      } catch (parseError) {
+        // Não é JSON válido, já exibimos o texto bruto acima
+      }
+      
+      throw new Error(`Error HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+    } catch (textError) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
   }
   
-  const data = await response.json();
+  // Captura o texto da resposta primeiro para debug
+  let responseText;
+  try {
+    responseText = await response.text();
+    console.log('[DEBUG API] Resposta em texto bruto:', responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+  } catch (textError) {
+    console.error('[DEBUG API] Erro ao ler texto da resposta:', textError);
+    throw new Error('Erro ao ler dados da resposta');
+  }
+  
+  // Tenta parsear o JSON
+  let data;
+  try {
+    data = JSON.parse(responseText);
+    console.log('[DEBUG API] Resposta JSON parseada:', data);
+  } catch (jsonError) {
+    console.error('[DEBUG API] Erro ao parsear JSON:', jsonError, 'Texto recebido:', responseText);
+    throw new Error('Resposta inválida: não é um JSON válido');
+  }
   
   // Tenta extrair os dados do formato mais comum para o mais específico
+  console.log('[DEBUG API] Estrutura da resposta:', {
+    isArray: Array.isArray(data),
+    hasDataProperty: data && typeof data.data !== 'undefined',
+    hasSuccessProperty: data && typeof data.success !== 'undefined',
+    dataType: data && data.data ? typeof data.data : 'undefined'
+  });
+  
   if (Array.isArray(data)) {
     return data as T;
   } else if (data && Array.isArray(data.data)) {
@@ -60,11 +106,11 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
     return data.data as T;
   } else if (data && data.success && data.data && typeof data.data === 'object') {
     // Novo caso: quando a resposta é {success: true, data: {objeto}}
-    return data.data as T;
+    return data as T; // Retornamos o objeto completo aqui para preservar a estrutura success + data
   }
   
   // Se nenhum dos formatos acima for reconhecido, retorna o próprio data
-  console.warn('Formato de resposta inesperado, usando dados brutos:', data);
+  console.warn('[DEBUG API] Formato de resposta inesperado, usando dados brutos:', data);
   return data as T;
 }
 
@@ -121,10 +167,42 @@ export async function apiRequest<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const url = buildApiUrl(endpoint);
-  const response = await fetchWithTimeout(url, {
-    ...DEFAULT_FETCH_OPTIONS,
-    ...options
+  
+  console.log('[DEBUG API] Iniciando requisição para:', { 
+    endpoint, 
+    url, 
+    options: {
+      method: options.method || 'GET',
+      headers: options.headers || DEFAULT_FETCH_OPTIONS.headers,
+      timeout: options.timeout || DEFAULT_FETCH_OPTIONS.timeout
+    }
   });
   
-  return handleApiResponse<T>(response);
+  try {
+    const response = await fetchWithTimeout(url, {
+      ...DEFAULT_FETCH_OPTIONS,
+      ...options
+    });
+    
+    console.log('[DEBUG API] Resposta recebida:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
+    const result = await handleApiResponse<T>(response);
+    console.log('[DEBUG API] Dados processados:', result);
+    return result;
+  } catch (error) {
+    console.error('[DEBUG API] Erro na requisição:', {
+      url,
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : String(error)
+    });
+    throw error;
+  }
 }

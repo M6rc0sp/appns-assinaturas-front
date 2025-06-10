@@ -22,7 +22,7 @@ const {
 } = usePaymentMethods();
 
 // ID do seller (você pode ajustar isso conforme sua lógica de negócio)
-const SELLER_ID = '1';
+const SELLER_ID = '3'; // Alterado para 3 conforme teste confirmado em https://assinaturas.appns.com.br/api/app/seller/3/payment-methods
 
 // Estado do formulário
 const formData = ref({
