@@ -14,15 +14,22 @@ export const getSellerPaymentMethods = async (sellerId: string): Promise<string[
   try {
     const response = await apiRequest<PaymentMethodsResponse>(`/app/seller/${sellerId}/payment-methods`)
     
-    if (response.success) {
+    if (response && response.success) {
       return response.data.payment_methods
     }
     
-    throw new Error('Falha ao buscar métodos de pagamento')
+    throw new Error('API retornou resposta inválida ao buscar métodos de pagamento')
   } catch (error) {
     console.error('Erro ao buscar métodos de pagamento:', error)
     
-    // Retorna métodos padrão em caso de erro
+    // Registrar detalhes adicionais sobre o erro para depuração
+    console.debug('Detalhes da conexão:', {
+      sellerId,
+      endpoint: `/app/seller/${sellerId}/payment-methods`,
+      errorMessage: error instanceof Error ? error.message : String(error)
+    })
+    
+    // Retorna métodos padrão em caso de erro para manter a aplicação funcionando
     return ['credit_card', 'pix', 'boleto']
   }
 }

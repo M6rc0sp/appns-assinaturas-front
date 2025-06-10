@@ -29,6 +29,11 @@ export async function fetchWithTimeout(
     });
     
     return response;
+  } catch (error) {
+    if (error instanceof Error && (error as any).name === 'AbortError') {
+      throw new Error(`Tempo limite excedido ao acessar ${url}`);
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }

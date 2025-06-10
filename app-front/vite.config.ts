@@ -32,7 +32,9 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:10000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
+        timeout: 60000
       }
     }
   }
