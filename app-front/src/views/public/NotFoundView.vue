@@ -2,8 +2,7 @@
   <div class="not-found-page">
     <h1>Página não encontrada</h1>
     <p>A página que você tentou acessar não existe ou não está disponível.</p>
-    <router-link to="/success" v-if="$route.name !== 'public-success'">Voltar para o Sucesso</router-link>
-    <router-link to="/checkout" v-else>Ir para o Checkout</router-link>
+    <p class="info-text">Verifique o endereço digitado ou entre em contato com o suporte se necessário.</p>
   </div>
 </template>
 
@@ -27,6 +26,11 @@
 }
 .not-found-page p {
   color: #666;
+  margin-bottom: 1rem;
+}
+.not-found-page .info-text {
+  color: #888;
+  font-size: 0.9rem;
   margin-bottom: 2rem;
 }
 </style>
