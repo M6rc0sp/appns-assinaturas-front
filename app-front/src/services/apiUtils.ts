@@ -96,6 +96,14 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
     dataType: data && data.data ? typeof data.data : 'undefined'
   });
   
+  // CASO ESPECIAL: Resposta da API appns com formato {success: true, data: {...}}
+  // Este é o caso mais comum da API e deve ser verificado primeiro
+  if (data && typeof data === 'object' && 'success' in data && data.success === true && 'data' in data) {
+    console.log('[DEBUG API] Detectado formato padrão da API appns: {success: true, data: {...}}');
+    return data.data as T;
+  }
+  
+  // Outros formatos possíveis
   if (Array.isArray(data)) {
     console.log('[DEBUG API] Retornando array de dados');
     return data as T;
@@ -105,13 +113,6 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
   } else if (data && data.data && Array.isArray(data.data.data)) {
     console.log('[DEBUG API] Retornando data.data.data (array aninhado)');
     return data.data.data as T;
-  } else if (data && data.success && Array.isArray(data.data)) {
-    console.log('[DEBUG API] Retornando data.data de success=true (array)');
-    return data.data as T;
-  } else if (data && data.success && data.data && typeof data.data === 'object') {
-    // Caso mais comum para API do appns: quando a resposta é {success: true, data: {objeto}}
-    console.log('[DEBUG API] Retornando objeto data de success=true e data=objeto');
-    return data.data as T; 
   } else if (data && typeof data === 'object') {
     // Para casos genéricos de objetos JSON
     console.log('[DEBUG API] Retornando objeto simples');
@@ -121,6 +122,20 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
   // Se nenhum dos formatos acima for reconhecido, retorna o próprio data com aviso
   console.warn('[DEBUG API] Formato de resposta realmente inesperado, usando dados brutos:', data);
   return data as T;
+}
+
+/**
+ * Extrai dados da estrutura de sucesso padrão da API ({success: true, data: ...})
+ * @param response Resposta da API
+ * @returns Dados contidos no campo 'data' ou a resposta completa se não for possível extrair
+ */
+export function extractApiData<T>(response: any): T {
+  if (response && typeof response === 'object' && 'success' in response && response.success === true) {
+    if ('data' in response && response.data !== undefined) {
+      return response.data as T;
+    }
+  }
+  return response as T;
 }
 
 /**
@@ -201,7 +216,17 @@ export async function apiRequest<T>(
     });
     
     const result = await handleApiResponse<T>(response);
-    console.log('[DEBUG API] Dados processados:', result);
+    
+    // Log mais conciso para evitar inundação do console
+    if (result && typeof result === 'object') {
+      console.log('[DEBUG API] Tipo de dados processados:', 
+        Array.isArray(result) ? `Array(${result.length})` : 
+        Object.prototype.toString.call(result).replace('[object ', '').replace(']', '')
+      );
+    } else {
+      console.log('[DEBUG API] Dados processados:', result);
+    }
+    
     return result;
   } catch (error) {
     console.error('[DEBUG API] Erro na requisição:', {

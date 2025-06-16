@@ -148,19 +148,21 @@ export async function fetchProductById(id: number): Promise<Product | null> {
       console.error(`[DEBUG PRODUCT] Erro HTTP ao buscar produto ${id}:`, response.status, response.statusText);
       return null;
     }
+
+    // Processando a resposta diretamente, sem logs excessivos
+    let rawData = await handleApiResponse<any>(response);
     
-    // Agora o handleApiResponse deve retornar diretamente os dados do produto
-    const data = await handleApiResponse(response);
-    
-    console.log('[DEBUG PRODUCT] Dados do produto recebidos:', JSON.stringify(data));
-    
-    // Se temos um objeto com ID, é um produto válido
-    if (data && typeof data === 'object' && 'id' in data) {
-      console.log('[DEBUG PRODUCT] Produto encontrado:', data);
-      return adaptProduct(data as ApiProduct);
+    // Tentativa específica para o formato appns {success: true, data: produto}
+    if (rawData && typeof rawData === 'object' && 'success' in rawData && rawData.success === true && 'data' in rawData) {
+      rawData = rawData.data;
     }
     
-    console.error('[DEBUG PRODUCT] Formato de produto não reconhecido:', data);
+    // Se temos um objeto com ID, é um produto válido
+    if (rawData && typeof rawData === 'object' && 'id' in rawData) {
+      return adaptProduct(rawData as ApiProduct);
+    }
+    
+    console.error('[DEBUG PRODUCT] Formato de produto não reconhecido:', typeof rawData);
     return null;
   } catch (error) {
     console.error(`Erro ao buscar produto ${id}:`, error);
