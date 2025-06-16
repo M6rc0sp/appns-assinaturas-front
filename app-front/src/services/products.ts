@@ -144,6 +144,8 @@ export async function fetchProductById(id: number): Promise<Product | null> {
     const response = await fetchWithTimeout(buildApiUrl(`app/products/${id}`));
     const data = await handleApiResponse(response);
     
+    console.log('[DEBUG PRODUCT] Resposta completa do produto:', JSON.stringify(data));
+    
     // Verificar se a resposta indica erro (formato específico da API)
     if (data && typeof data === 'object' && 'success' in data && data.success === false) {
       const message = typeof (data as any).message === 'string' ? (data as any).message : 'ID inexistente';
@@ -151,12 +153,19 @@ export async function fetchProductById(id: number): Promise<Product | null> {
       return null;
     }
     
-    // Verificar se temos dados válidos para criar um produto
+    // Caso 1: Resposta com estrutura {success: true, data: {product}}
+    if (data && typeof data === 'object' && 'success' in data && data.success === true && 'data' in data) {
+      console.log('[DEBUG PRODUCT] Produto encontrado em formato success/data:', data.data);
+      return adaptProduct(data.data as ApiProduct);
+    }
+    
+    // Caso 2: Resposta direta com o objeto produto
     if (data && typeof data === 'object' && 'id' in data) {
+      console.log('[DEBUG PRODUCT] Produto encontrado em formato direto:', data);
       return adaptProduct(data as ApiProduct);
     }
     
-    console.error('Formato de resposta inválido:', data);
+    console.error('[DEBUG PRODUCT] Formato de resposta não reconhecido:', data);
     return null;
   } catch (error) {
     console.error(`Erro ao buscar produto ${id}:`, error);

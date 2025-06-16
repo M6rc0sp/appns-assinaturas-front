@@ -97,20 +97,29 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
   });
   
   if (Array.isArray(data)) {
+    console.log('[DEBUG API] Retornando array de dados');
     return data as T;
   } else if (data && Array.isArray(data.data)) {
+    console.log('[DEBUG API] Retornando data.data (array)');
     return data.data as T;
   } else if (data && data.data && Array.isArray(data.data.data)) {
+    console.log('[DEBUG API] Retornando data.data.data (array aninhado)');
     return data.data.data as T;
   } else if (data && data.success && Array.isArray(data.data)) {
+    console.log('[DEBUG API] Retornando data.data de success=true (array)');
     return data.data as T;
   } else if (data && data.success && data.data && typeof data.data === 'object') {
-    // Novo caso: quando a resposta é {success: true, data: {objeto}}
-    return data as T; // Retornamos o objeto completo aqui para preservar a estrutura success + data
+    // Caso mais comum para API do appns: quando a resposta é {success: true, data: {objeto}}
+    console.log('[DEBUG API] Retornando objeto completo com success=true e data=objeto');
+    return data as T; 
+  } else if (data && typeof data === 'object') {
+    // Para casos genéricos de objetos JSON
+    console.log('[DEBUG API] Retornando objeto simples');
+    return data as T;
   }
   
-  // Se nenhum dos formatos acima for reconhecido, retorna o próprio data
-  console.warn('[DEBUG API] Formato de resposta inesperado, usando dados brutos:', data);
+  // Se nenhum dos formatos acima for reconhecido, retorna o próprio data com aviso
+  console.warn('[DEBUG API] Formato de resposta realmente inesperado, usando dados brutos:', data);
   return data as T;
 }
 

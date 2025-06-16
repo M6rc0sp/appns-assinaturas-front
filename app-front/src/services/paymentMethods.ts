@@ -26,14 +26,34 @@ export const getSellerPaymentMethods = async (sellerId: string): Promise<string[
     console.log('[DEBUG] Iniciando requisição via apiRequest');
     const response = await apiRequest<PaymentMethodsResponse>(`/app/seller/${sellerId}/payment-methods`);
     
-    console.log('[DEBUG] Resposta recebida:', response);
+    console.log('[DEBUG] Resposta completa recebida:', JSON.stringify(response));
     
-    if (response && response.success) {
-      console.log('[DEBUG] Métodos de pagamento obtidos com sucesso:', response.data.payment_methods);
-      return response.data.payment_methods;
+    // Dois cenários possíveis:
+    // 1. O apiRequest já extraiu o objeto interno (só data.payment_methods)
+    // 2. O apiRequest retornou o objeto completo {success: true, data: {payment_methods: [...]}
+    
+    if (Array.isArray(response)) {
+      // Caso 1: Se a resposta já é um array, é o array de métodos de pagamento
+      console.log('[DEBUG] Resposta já é um array de métodos de pagamento:', response);
+      return response;
+    } else if (response && typeof response === 'object') {
+      // Caso 2a: Se a resposta é o objeto completo com a estrutura esperada
+      if ('success' in response && response.success && 'data' in response && 
+          response.data && 'payment_methods' in response.data && 
+          Array.isArray(response.data.payment_methods)) {
+        console.log('[DEBUG] Métodos de pagamento obtidos com sucesso:', response.data.payment_methods);
+        return response.data.payment_methods;
+      }
+      
+      // Caso 2b: Se a resposta é o próprio array de métodos, mas dentro de um objeto
+      if ('payment_methods' in response && Array.isArray(response.payment_methods)) {
+        console.log('[DEBUG] Métodos de pagamento encontrados diretamente no objeto:', response.payment_methods);
+        return response.payment_methods;
+      }
     }
     
-    throw new Error('API retornou resposta inválida ao buscar métodos de pagamento');
+    console.error('[DEBUG] Formato de resposta não reconhecido:', response);
+    throw new Error('API retornou resposta em formato não esperado ao buscar métodos de pagamento');
   } catch (error) {
     console.error('[DEBUG] Erro ao buscar métodos de pagamento:', error);
     
