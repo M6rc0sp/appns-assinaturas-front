@@ -110,8 +110,8 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
     return data.data as T;
   } else if (data && data.success && data.data && typeof data.data === 'object') {
     // Caso mais comum para API do appns: quando a resposta é {success: true, data: {objeto}}
-    console.log('[DEBUG API] Retornando objeto completo com success=true e data=objeto');
-    return data as T; 
+    console.log('[DEBUG API] Retornando objeto data de success=true e data=objeto');
+    return data.data as T; 
   } else if (data && typeof data === 'object') {
     // Para casos genéricos de objetos JSON
     console.log('[DEBUG API] Retornando objeto simples');

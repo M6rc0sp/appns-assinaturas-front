@@ -142,30 +142,25 @@ export async function fetchPublicProducts(): Promise<Product[]> {
 export async function fetchProductById(id: number): Promise<Product | null> {
   try {
     const response = await fetchWithTimeout(buildApiUrl(`app/products/${id}`));
-    const data = await handleApiResponse(response);
     
-    console.log('[DEBUG PRODUCT] Resposta completa do produto:', JSON.stringify(data));
-    
-    // Verificar se a resposta indica erro (formato específico da API)
-    if (data && typeof data === 'object' && 'success' in data && data.success === false) {
-      const message = typeof (data as any).message === 'string' ? (data as any).message : 'ID inexistente';
-      console.error(`Produto não encontrado: ${message}`);
+    // Capturando possíveis erros na resposta HTTP
+    if (!response.ok) {
+      console.error(`[DEBUG PRODUCT] Erro HTTP ao buscar produto ${id}:`, response.status, response.statusText);
       return null;
     }
     
-    // Caso 1: Resposta com estrutura {success: true, data: {product}}
-    if (data && typeof data === 'object' && 'success' in data && data.success === true && 'data' in data) {
-      console.log('[DEBUG PRODUCT] Produto encontrado em formato success/data:', data.data);
-      return adaptProduct(data.data as ApiProduct);
-    }
+    // Agora o handleApiResponse deve retornar diretamente os dados do produto
+    const data = await handleApiResponse(response);
     
-    // Caso 2: Resposta direta com o objeto produto
+    console.log('[DEBUG PRODUCT] Dados do produto recebidos:', JSON.stringify(data));
+    
+    // Se temos um objeto com ID, é um produto válido
     if (data && typeof data === 'object' && 'id' in data) {
-      console.log('[DEBUG PRODUCT] Produto encontrado em formato direto:', data);
+      console.log('[DEBUG PRODUCT] Produto encontrado:', data);
       return adaptProduct(data as ApiProduct);
     }
     
-    console.error('[DEBUG PRODUCT] Formato de resposta não reconhecido:', data);
+    console.error('[DEBUG PRODUCT] Formato de produto não reconhecido:', data);
     return null;
   } catch (error) {
     console.error(`Erro ao buscar produto ${id}:`, error);

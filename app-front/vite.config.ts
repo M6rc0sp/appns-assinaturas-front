@@ -9,7 +9,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   base: '/shop/',
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          // Tratamento para o comportamento entre iframes
+          isCustomElement: (tag) => tag === 'custom-iframe-element'
+        }
+      }
+    }),
     vueJsx(),
     vueDevTools(),
   ],
