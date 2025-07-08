@@ -6,6 +6,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { createShopperSubscriptionFromOrder } from '@/services/subscriptions';
 import { createOrder } from '@/services/orders'; // Importando o serviço de criação de pedidos
 import { createShopper } from '@/services/shoppers'; // Importando o serviço para criar compradores
+import { fetchProductSeller } from '@/services/products'; // Importando função para buscar seller do produto
 import { usePaymentMethods } from '@/composables/usePaymentMethods';
 import CheckoutDisclaimer from '@/components/ui/CheckoutDisclaimer.vue';
 
@@ -21,8 +22,8 @@ const {
   isMethodAvailable 
 } = usePaymentMethods();
 
-// ID do seller (você pode ajustar isso conforme sua lógica de negócio)
-const SELLER_ID = '3'; // Alterado para 3 conforme teste confirmado em https://assinaturas.appns.com.br/api/app/seller/3/payment-methods
+// ID do seller (será obtido do produto dinamicamente)
+const sellerId = ref<number | null>(null);
 
 // Estado do formulário
 const formData = ref({
@@ -79,6 +80,7 @@ const canProceedToStep3 = computed(() => {
 
 const canSubmitOrder = computed(() => {
   if (!formData.value.terms) return false;
+  if (!sellerId.value) return false; // Garantir que temos um seller_id
   
   if (formData.value.paymentMethod === 'credit_card') {
     const cc = formData.value.creditCard;
@@ -197,6 +199,11 @@ async function submitOrder() {
     return;
   }
   
+  if (!sellerId.value) {
+    errors.value.submit = 'Erro: Informações do vendedor não encontradas. Recarregue a página e tente novamente.';
+    return;
+  }
+  
   processing.value = true;
   
   try {
@@ -252,9 +259,14 @@ async function submitOrder() {
     const shopperId = shopperResponse.id;
     console.log('Comprador criado com ID:', shopperId);
 
+    // Verificar se temos o seller_id
+    if (!sellerId.value) {
+      throw new Error('Seller ID não encontrado. Verifique se há produtos no carrinho.');
+    }
+
     // 3. Formato correto para a API de pedidos (agora usando o shopperId válido)
     const orderData = {
-      seller_id: 1, // Definir o ID do vendedor apropriado
+      seller_id: sellerId.value, // Usando o seller_id obtido do produto
       shopper_id: shopperId, // Usando o ID do comprador que acabamos de criar
       products: cartStore.items.map(item => item.product.id), // Array de IDs de produto
       value: cartStore.finalPrice,
@@ -317,17 +329,40 @@ async function submitOrder() {
 onMounted(async () => {
   if (cartStore.totalItems === 0) {
     // router.push('/catalog'); // Removido catálogo
+    return;
   }
   
-  // Buscar métodos de pagamento disponíveis para o seller
-  await fetchPaymentMethods(SELLER_ID);
-  
-  // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
-  // definir o primeiro método disponível como padrão
-  if (availablePaymentMethodsWithLabels.value.length > 0) {
-    if (!isMethodAvailable(formData.value.paymentMethod)) {
-      formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+  try {
+    // Buscar o seller_id do primeiro produto no carrinho
+    const firstProduct = cartStore.items[0]?.product;
+    if (firstProduct && firstProduct.id) {
+      console.log('[DEBUG] Buscando seller para produto:', firstProduct.id);
+      const productSellerData = await fetchProductSeller(firstProduct.id);
+      
+      if (productSellerData) {
+        sellerId.value = productSellerData.sellerId;
+        console.log('[DEBUG] Seller ID obtido:', sellerId.value);
+        
+        // Buscar métodos de pagamento disponíveis para o seller
+        await fetchPaymentMethods(sellerId.value.toString());
+        
+        // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
+        // definir o primeiro método disponível como padrão
+        if (availablePaymentMethodsWithLabels.value.length > 0) {
+          if (!isMethodAvailable(formData.value.paymentMethod)) {
+            formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+          }
+        }
+      } else {
+        console.error('[DEBUG] Não foi possível obter o seller do produto');
+        errors.value.submit = 'Erro ao carregar informações do vendedor. Tente novamente.';
+      }
+    } else {
+      console.error('[DEBUG] Nenhum produto encontrado no carrinho');
     }
+  } catch (error) {
+    console.error('[DEBUG] Erro ao buscar seller do produto:', error);
+    errors.value.submit = 'Erro ao carregar informações do vendedor.';
   }
 });
 </script>

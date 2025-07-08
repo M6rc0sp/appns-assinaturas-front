@@ -171,6 +171,70 @@ export async function fetchProductById(id: number): Promise<Product | null> {
 }
 
 /**
+ * Interface para resposta da API ao buscar seller do produto
+ */
+export interface ProductSellerResponse {
+  success: boolean;
+  data: {
+    product: {
+      id: number;
+      name: string;
+      seller_id: number;
+    };
+    seller: {
+      id: number;
+      user_id: number;
+      nuvemshop_id: string;
+      nuvemshop_info?: string;
+      subaccount_id?: string;
+      app_status: string;
+      created_at: string;
+      updated_at: string;
+    };
+  };
+}
+
+/**
+ * Busca o seller (vendedor) de um produto específico
+ * @param productId ID do produto
+ * @returns Informações do produto e seu seller
+ */
+export async function fetchProductSeller(productId: number): Promise<{ sellerId: number; product: any; seller: any } | null> {
+  try {
+    const response = await fetchWithTimeout(buildApiUrl(`products/${productId}/seller`));
+    
+    if (!response.ok) {
+      console.error(`[DEBUG PRODUCT SELLER] Erro HTTP ao buscar seller do produto ${productId}:`, response.status, response.statusText);
+      return null;
+    }
+
+    const data = await handleApiResponse<any>(response);
+    
+    console.log('[DEBUG PRODUCT SELLER] Dados do seller recebidos:', data);
+    
+    // Extrair dados se estiver no formato {success: true, data: {...}}
+    let responseData = data;
+    if (data && typeof data === 'object' && 'success' in data && data.success === true && 'data' in data) {
+      responseData = data.data;
+    }
+    
+    if (responseData && 'product' in responseData && 'seller' in responseData) {
+      return {
+        sellerId: responseData.seller.id,
+        product: responseData.product,
+        seller: responseData.seller
+      };
+    }
+    
+    console.error('[DEBUG PRODUCT SELLER] Formato de resposta não reconhecido:', responseData);
+    return null;
+  } catch (error) {
+    console.error(`Erro ao buscar seller do produto ${productId}:`, error);
+    return null;
+  }
+}
+
+/**
  * Cria um novo pedido com assinatura para um cliente não-autenticado
  * @param orderData Dados do pedido com assinatura
  * @returns Resultado da operação
