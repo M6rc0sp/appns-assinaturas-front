@@ -201,32 +201,44 @@ export interface ProductSellerResponse {
  */
 export async function fetchProductSeller(productId: number): Promise<{ sellerId: number; product: any; seller: any } | null> {
   try {
-    const response = await fetchWithTimeout(buildApiUrl(`products/${productId}/seller`));
+    const response = await fetchWithTimeout(buildApiUrl(`app/products/${productId}/seller`));
     
-    if (!response.ok) {
-      console.error(`[DEBUG PRODUCT SELLER] Erro HTTP ao buscar seller do produto ${productId}:`, response.status, response.statusText);
+    // Primeiro, tentamos ler os dados da resposta independentemente do status HTTP
+    let data: any;
+    try {
+      const textResponse = await response.text();
+      data = textResponse ? JSON.parse(textResponse) : null;
+    } catch (parseError) {
+      console.error(`[DEBUG PRODUCT SELLER] Erro ao fazer parse da resposta para produto ${productId}:`, parseError);
       return null;
     }
-
-    const data = await handleApiResponse<any>(response);
     
-    console.log('[DEBUG PRODUCT SELLER] Dados do seller recebidos:', data);
+    console.log('[DEBUG PRODUCT SELLER] Dados do seller recebidos:', data, 'Status:', response.status);
     
-    // Extrair dados se estiver no formato {success: true, data: {...}}
-    let responseData = data;
-    if (data && typeof data === 'object' && 'success' in data && data.success === true && 'data' in data) {
-      responseData = data.data;
+    // Verificamos se a resposta tem sucesso no corpo, mesmo com status HTTP 404
+    if (data && typeof data === 'object' && 'success' in data && data.success === true) {
+      // Extrair dados se estiver no formato {success: true, data: {...}}
+      let responseData = data;
+      if ('data' in data) {
+        responseData = data.data;
+      }
+      
+      if (responseData && 'product' in responseData && 'seller' in responseData) {
+        return {
+          sellerId: responseData.seller.id,
+          product: responseData.product,
+          seller: responseData.seller
+        };
+      }
     }
     
-    if (responseData && 'product' in responseData && 'seller' in responseData) {
-      return {
-        sellerId: responseData.seller.id,
-        product: responseData.product,
-        seller: responseData.seller
-      };
+    // Se chegou até aqui, não conseguimos processar a resposta
+    if (!response.ok) {
+      console.error(`[DEBUG PRODUCT SELLER] Erro HTTP ao buscar seller do produto ${productId}:`, response.status, response.statusText);
+    } else {
+      console.error('[DEBUG PRODUCT SELLER] Formato de resposta não reconhecido:', data);
     }
     
-    console.error('[DEBUG PRODUCT SELLER] Formato de resposta não reconhecido:', responseData);
     return null;
   } catch (error) {
     console.error(`Erro ao buscar seller do produto ${productId}:`, error);
