@@ -210,39 +210,72 @@ export async function fetchProductSeller(productId: number): Promise<{ sellerId:
       data = textResponse ? JSON.parse(textResponse) : null;
     } catch (parseError) {
       console.error(`[DEBUG PRODUCT SELLER] Erro ao fazer parse da resposta para produto ${productId}:`, parseError);
-      return null;
+      throw new Error('Erro ao processar resposta do servidor');
     }
     
     console.log('[DEBUG PRODUCT SELLER] Dados do seller recebidos:', data, 'Status:', response.status);
     
-    // Verificamos se a resposta tem sucesso no corpo, mesmo com status HTTP 404
-    if (data && typeof data === 'object' && 'success' in data && data.success === true) {
-      // Extrair dados se estiver no formato {success: true, data: {...}}
-      let responseData = data;
-      if ('data' in data) {
-        responseData = data.data;
+    // Verificar se há erro de autorização/permissão (status 403)
+    if (response.status === 403) {
+      // Verificar se há mensagem específica no corpo da resposta
+      if (data && data.message) {
+        throw new Error(data.message);
+      } else {
+        throw new Error('Este produto não está disponível pois a conta do vendedor não tem permissão para vendas');
+      }
+    }
+    
+    // Verificar se há outros erros HTTP
+    if (!response.ok) {
+      if (data && data.message) {
+        throw new Error(data.message);
+      } else {
+        throw new Error(`Erro ao buscar informações do vendedor (${response.status})`);
+      }
+    }
+    
+    // Se a resposta não tem dados válidos, mas status é ok
+    if (!data) {
+      throw new Error('Informações do vendedor não encontradas');
+    }
+    
+    // Verificamos se a resposta tem sucesso no corpo
+    if (data && typeof data === 'object' && 'success' in data) {
+      if (data.success === false) {
+        // API retornou erro explícito
+        const errorMessage = data.message || 'Produto temporariamente indisponível';
+        throw new Error(errorMessage);
       }
       
-      if (responseData && 'product' in responseData && 'seller' in responseData) {
-        return {
-          sellerId: responseData.seller.id,
-          product: responseData.product,
-          seller: responseData.seller
-        };
+      if (data.success === true) {
+        // Extrair dados se estiver no formato {success: true, data: {...}}
+        let responseData = data;
+        if ('data' in data) {
+          responseData = data.data;
+        }
+        
+        if (responseData && 'product' in responseData && 'seller' in responseData) {
+          return {
+            sellerId: responseData.seller.id,
+            product: responseData.product,
+            seller: responseData.seller
+          };
+        }
       }
     }
     
-    // Se chegou até aqui, não conseguimos processar a resposta
-    if (!response.ok) {
-      console.error(`[DEBUG PRODUCT SELLER] Erro HTTP ao buscar seller do produto ${productId}:`, response.status, response.statusText);
-    } else {
-      console.error('[DEBUG PRODUCT SELLER] Formato de resposta não reconhecido:', data);
+    // Se chegou até aqui, formato da resposta não é reconhecido
+    console.error('[DEBUG PRODUCT SELLER] Formato de resposta não reconhecido:', data);
+    throw new Error('Formato de resposta inválido do servidor');
+    
+  } catch (error) {
+    // Se já é um Error que lançamos, re-throw
+    if (error instanceof Error) {
+      throw error;
     }
     
-    return null;
-  } catch (error) {
     console.error(`Erro ao buscar seller do produto ${productId}:`, error);
-    return null;
+    throw new Error('Erro ao conectar com o servidor');
   }
 }
 

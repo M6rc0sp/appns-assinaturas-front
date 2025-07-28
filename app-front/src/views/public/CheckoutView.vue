@@ -188,6 +188,62 @@ function backToCatalog() {
   // router.push('/catalog'); // Removido catálogo
 }
 
+// Função para tentar novamente buscar seller
+async function retrySellerCheck() {
+  errors.value.submit = '';
+  sellerId.value = null;
+  
+  try {
+    const firstProduct = cartStore.items[0]?.product;
+    if (firstProduct && firstProduct.id) {
+      console.log('[DEBUG] Tentando novamente buscar seller para produto:', firstProduct.id);
+      
+      const productSellerData = await fetchProductSeller(firstProduct.id);
+      
+      if (productSellerData) {
+        sellerId.value = productSellerData.sellerId;
+        console.log('[DEBUG] Seller ID obtido na tentativa:', sellerId.value);
+        
+        // Buscar métodos de pagamento disponíveis para o seller
+        await fetchPaymentMethods(sellerId.value.toString());
+        
+        if (availablePaymentMethodsWithLabels.value.length > 0) {
+          if (!isMethodAvailable(formData.value.paymentMethod)) {
+            formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+          }
+        }
+      } else {
+        errors.value.submit = 'Erro ao carregar informações do vendedor. Tente novamente.';
+      }
+    }
+  } catch (error) {
+    console.error('[DEBUG] Erro ao tentar novamente buscar seller:', error);
+    
+    let errorMessage = 'Produto temporariamente indisponível.';
+    
+    if (error instanceof Error) {
+      const errorMsg = error.message.toLowerCase();
+      
+      if (errorMsg.includes('suspensa') || errorMsg.includes('suspended')) {
+        errorMessage = 'Este produto não está disponível pois a conta do vendedor está suspensa.';
+      } else if (errorMsg.includes('expirou') || errorMsg.includes('expired')) {
+        errorMessage = 'Este produto não está disponível pois a assinatura do vendedor expirou.';
+      } else if (errorMsg.includes('cancelada') || errorMsg.includes('cancelled')) {
+        errorMessage = 'Este produto não está disponível pois a conta do vendedor foi cancelada.';
+      } else if (errorMsg.includes('pendente') || errorMsg.includes('pending')) {
+        errorMessage = 'Este produto está temporariamente indisponível enquanto o vendedor configura sua conta.';
+      } else if (errorMsg.includes('inativo') || errorMsg.includes('inactive')) {
+        errorMessage = 'Este produto não está disponível pois a conta do vendedor está inativa.';
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+    }
+    
+    errors.value.submit = errorMessage;
+    sellerId.value = null;
+  }
+}
+
 async function submitOrder() {
   if (processing.value) return;
   
@@ -431,9 +487,29 @@ onMounted(async () => {
       </div>
       
       <div class="row">
+        <!-- Mensagem de erro global do seller -->
+        <div v-if="errors.submit" class="col-12 mb-4">
+          <div class="alert alert-danger">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <span class="material-symbols-outlined me-2">error</span>
+                <div>
+                  <strong>Produto Indisponível</strong><br>
+                  {{ errors.submit }}
+                </div>
+              </div>
+              <div>
+                <button @click="retrySellerCheck" class="btn btn-outline-primary btn-sm">
+                  Tentar novamente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- Formulário de checkout -->
         <div class="col-lg-8">
-          <div class="box p-4 p-md-5 mb-4 rounded shadow-sm">
+          <div class="box p-4 p-md-5 mb-4 rounded shadow-sm" :class="{ 'disabled-form': errors.submit }">
             <!-- Passo 1: Dados pessoais -->
             <div v-if="formStep === 1">
               <h4 class="mb-4 checkout-step-title">Seus dados</h4>
@@ -875,6 +951,24 @@ onMounted(async () => {
   border-radius: 15px;
   box-shadow: 0 2px 30px rgba(0,0,0,.04);
   padding: 24px 20px;
+}
+
+.disabled-form {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.disabled-form::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 15px;
+  z-index: 1;
 }
 
 .checkout-steps {
