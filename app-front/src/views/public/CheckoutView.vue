@@ -489,20 +489,21 @@ onMounted(async () => {
       <div class="row">
         <!-- Mensagem de erro global do seller -->
         <div v-if="errors.submit" class="col-12 mb-4">
-          <div class="alert alert-danger">
-            <div class="d-flex align-items-center justify-content-between">
-              <div class="d-flex align-items-center">
-                <span class="material-symbols-outlined me-2">error</span>
-                <div>
-                  <strong>Produto Indisponível</strong><br>
-                  {{ errors.submit }}
-                </div>
+          <div class="error-card error-card-enter">
+            <div class="error-card-header">
+              <div class="error-icon-wrapper">
+                <span class="material-symbols-outlined error-icon">warning</span>
               </div>
-              <div>
-                <button @click="retrySellerCheck" class="btn btn-outline-primary btn-sm">
-                  Tentar novamente
-                </button>
+              <div class="error-content">
+                <h5 class="error-title">Produto Indisponível</h5>
+                <p class="error-message">{{ errors.submit }}</p>
               </div>
+            </div>
+            <div class="error-card-actions">
+              <button @click="retrySellerCheck" class="btn btn-retry">
+                <span class="material-symbols-outlined me-2">refresh</span>
+                Tentar novamente
+              </button>
             </div>
           </div>
         </div>
@@ -954,9 +955,10 @@ onMounted(async () => {
 }
 
 .disabled-form {
-  opacity: 0.6;
+  opacity: 0.7;
   pointer-events: none;
   position: relative;
+  filter: grayscale(0.3);
 }
 
 .disabled-form::after {
@@ -966,9 +968,156 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(248, 250, 252, 0.8) 100%);
   border-radius: 15px;
   z-index: 1;
+  backdrop-filter: blur(1px);
+}
+
+/* Error Card Styling */
+.error-card {
+  background: linear-gradient(135deg, #fef2f2 0%, #fde8e8 100%);
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(248, 113, 113, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.error-card:hover {
+  box-shadow: 0 6px 25px rgba(248, 113, 113, 0.12);
+  transform: translateY(-1px);
+}
+
+.error-card-header {
+  display: flex;
+  align-items: flex-start;
+  padding: 24px;
+  gap: 16px;
+}
+
+.error-icon-wrapper {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.3);
+}
+
+.error-icon {
+  color: white;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.error-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-title {
+  color: #dc2626;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.error-message {
+  color: #7f1d1d;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.error-card-actions {
+  background: rgba(252, 165, 165, 0.1);
+  border-top: 1px solid rgba(252, 165, 165, 0.2);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-retry {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-retry:hover {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-color: #d1d5db;
+  color: #1f2937;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-retry:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-retry .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Error Card Animation */
+.error-card-enter {
+  animation: errorCardSlideIn 0.4s ease-out;
+}
+
+@keyframes errorCardSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive adjustments for error card */
+@media (max-width: 768px) {
+  .error-card-header {
+    padding: 20px;
+    gap: 12px;
+  }
+  
+  .error-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .error-icon {
+    font-size: 20px;
+  }
+  
+  .error-title {
+    font-size: 1.1rem;
+  }
+  
+  .error-message {
+    font-size: 0.9rem;
+  }
+  
+  .error-card-actions {
+    padding: 12px 20px;
+  }
 }
 
 .checkout-steps {
