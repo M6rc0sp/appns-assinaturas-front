@@ -337,32 +337,66 @@ onMounted(async () => {
     const firstProduct = cartStore.items[0]?.product;
     if (firstProduct && firstProduct.id) {
       console.log('[DEBUG] Buscando seller para produto:', firstProduct.id);
-      const productSellerData = await fetchProductSeller(firstProduct.id);
       
-      if (productSellerData) {
-        sellerId.value = productSellerData.sellerId;
-        console.log('[DEBUG] Seller ID obtido:', sellerId.value);
+      try {
+        const productSellerData = await fetchProductSeller(firstProduct.id);
         
-        // Buscar métodos de pagamento disponíveis para o seller
-        await fetchPaymentMethods(sellerId.value.toString());
+        if (productSellerData) {
+          sellerId.value = productSellerData.sellerId;
+          console.log('[DEBUG] Seller ID obtido:', sellerId.value);
+          
+          // Buscar métodos de pagamento disponíveis para o seller
+          await fetchPaymentMethods(sellerId.value.toString());
+          
+          // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
+          // definir o primeiro método disponível como padrão
+          if (availablePaymentMethodsWithLabels.value.length > 0) {
+            if (!isMethodAvailable(formData.value.paymentMethod)) {
+              formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+            }
+          }
+        } else {
+          console.error('[DEBUG] Não foi possível obter o seller do produto');
+          errors.value.submit = 'Erro ao carregar informações do vendedor. Tente novamente.';
+        }
+      } catch (sellerError) {
+        console.error('[DEBUG] Erro específico ao buscar seller:', sellerError);
         
-        // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
-        // definir o primeiro método disponível como padrão
-        if (availablePaymentMethodsWithLabels.value.length > 0) {
-          if (!isMethodAvailable(formData.value.paymentMethod)) {
-            formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
+        // Verificar se o erro contém informações sobre status da assinatura
+        let errorMessage = 'Produto temporariamente indisponível.';
+        
+        if (sellerError instanceof Error) {
+          // Se a mensagem de erro do backend contém informações específicas sobre o status
+          const errorMsg = sellerError.message.toLowerCase();
+          
+          if (errorMsg.includes('suspensa') || errorMsg.includes('suspended')) {
+            errorMessage = 'Este produto não está disponível pois a conta do vendedor está suspensa.';
+          } else if (errorMsg.includes('expirou') || errorMsg.includes('expired')) {
+            errorMessage = 'Este produto não está disponível pois a assinatura do vendedor expirou.';
+          } else if (errorMsg.includes('cancelada') || errorMsg.includes('cancelled')) {
+            errorMessage = 'Este produto não está disponível pois a conta do vendedor foi cancelada.';
+          } else if (errorMsg.includes('pendente') || errorMsg.includes('pending')) {
+            errorMessage = 'Este produto está temporariamente indisponível enquanto o vendedor configura sua conta.';
+          } else if (errorMsg.includes('inativo') || errorMsg.includes('inactive')) {
+            errorMessage = 'Este produto não está disponível pois a conta do vendedor está inativa.';
+          } else {
+            // Usar a mensagem original do backend se disponível
+            errorMessage = sellerError.message || errorMessage;
           }
         }
-      } else {
-        console.error('[DEBUG] Não foi possível obter o seller do produto');
-        errors.value.submit = 'Erro ao carregar informações do vendedor. Tente novamente.';
+        
+        errors.value.submit = errorMessage;
+        
+        // Limpar dados relacionados ao seller já que não está disponível
+        sellerId.value = null;
       }
     } else {
       console.error('[DEBUG] Nenhum produto encontrado no carrinho');
+      errors.value.submit = 'Nenhum produto encontrado no carrinho.';
     }
   } catch (error) {
-    console.error('[DEBUG] Erro ao buscar seller do produto:', error);
-    errors.value.submit = 'Erro ao carregar informações do vendedor.';
+    console.error('[DEBUG] Erro geral ao processar checkout:', error);
+    errors.value.submit = 'Erro ao carregar informações do checkout. Recarregue a página e tente novamente.';
   }
 });
 </script>
