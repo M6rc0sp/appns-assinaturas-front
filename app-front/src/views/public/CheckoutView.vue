@@ -1,4 +1,11 @@
 <script setup lang="ts">
+// Adiciona a declaração para window.parent.LS
+declare global {
+  interface Window {
+    LS?: any;
+  }
+}
+
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
@@ -383,6 +390,10 @@ async function submitOrder() {
 
 // Verificar se há itens no carrinho ao carregar a página e buscar métodos de pagamento
 onMounted(async () => {
+
+  console.log('iniciou o vue.js');
+  console.log(window.parent.LS);
+
   if (cartStore.totalItems === 0) {
     // router.push('/catalog'); // Removido catálogo
     return;
