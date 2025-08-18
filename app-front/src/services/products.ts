@@ -19,6 +19,15 @@ export interface Product {
 }
 
 // Interface para o formato da API atual
+// Imagem vinda da API pode ser string (URL) ou objeto com base64
+export interface ApiImageObj {
+  filename?: string;
+  position?: number;
+  attachment?: string; // base64 puro sem prefixo data:
+  url?: string;        // opcional, caso a API já traga uma URL
+  mime_type?: string;  // opcional
+}
+
 export interface ApiProduct {
   id: number;
   seller_id: string | number;
@@ -28,10 +37,53 @@ export interface ApiProduct {
   stock?: number;
   sku?: string;
   categories?: string;
-  images: string[] | null;
+  images: Array<string | ApiImageObj> | null;
   createdAt?: string;
   updatedAt?: string;
   // outros campos possíveis da API
+}
+
+// Helper: infere mime-type pelo filename
+function inferMimeType(filename?: string, fallback = 'image/png'): string {
+  if (!filename) return fallback;
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'svg':
+      return 'image/svg+xml';
+    default:
+      return fallback;
+  }
+}
+
+// Normaliza o array de imagens da API para um array de strings (URLs ou data URLs)
+function normalizeImages(images: Array<string | ApiImageObj> | null | undefined): string[] {
+  if (!images || !Array.isArray(images)) return [];
+  return images
+    .map((img) => {
+      if (typeof img === 'string') {
+        // Pode já ser uma URL http(s) ou até um data URL
+        return img;
+      }
+      // Objeto
+      if (img.attachment && typeof img.attachment === 'string' && img.attachment.trim() !== '') {
+        const mime = img.mime_type || inferMimeType(img.filename);
+        return `data:${mime};base64,${img.attachment}`;
+      }
+      if (img.url && typeof img.url === 'string') {
+        return img.url;
+      }
+      return '';
+    })
+    .filter((s): s is string => Boolean(s));
 }
 
 // Função adaptadora para converter o formato da API para o formato esperado pelo front-end
@@ -43,7 +95,7 @@ function adaptProduct(apiProduct: ApiProduct): Product {
     description: apiProduct.description || '',
     price: apiProduct.price,
     sale_price: undefined, // A API atual não fornece este campo
-    images: apiProduct.images || [], // Se for null, use array vazio
+    images: normalizeImages(apiProduct.images), // Normaliza para string[] (URL/data URL)
     variations: apiProduct.categories ? apiProduct.categories.split(' > ') : [],
     cycle: BillingCycle.MONTHLY, // Definindo um valor padrão
     active: true, // Definindo um valor padrão
