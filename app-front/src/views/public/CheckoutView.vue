@@ -120,6 +120,55 @@ watch(() => formData.value.address.zipCode, (newValue) => {
   }
 });
 
+// Utilidades para campos de cartão
+function formatCardNumber(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 16); // até 16 dígitos
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim(); // agrupa de 4 em 4
+}
+
+function formatCardCVV(value: string): string {
+  return value.replace(/\D/g, '').slice(0, 4); // apenas dígitos, até 4
+}
+
+function formatCardExpiry(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 4); // MM + AA
+  if (digits.length === 0) return '';
+  let mm = digits.slice(0, 2);
+  // Se o primeiro dígito > 1, prefixa 0 (ex: 3 -> 03)
+  if (digits.length === 1) {
+    const d0 = parseInt(digits[0], 10);
+    if (d0 > 1) {
+      mm = `0${d0}`;
+    } else {
+      mm = digits[0];
+    }
+    return mm;
+  }
+  // Ajusta mês no range 01..12
+  let mmNum = parseInt(mm, 10);
+  if (isNaN(mmNum) || mmNum <= 0) mmNum = 1;
+  if (mmNum > 12) mmNum = 12;
+  mm = mmNum.toString().padStart(2, '0');
+  const yy = digits.slice(2, 4);
+  return yy ? `${mm}/${yy}` : mm;
+}
+
+// Watchers para aplicar máscaras ao digitar
+watch(() => formData.value.creditCard.number, (val) => {
+  const formatted = formatCardNumber(val || '');
+  if (formatted !== val) formData.value.creditCard.number = formatted;
+});
+
+watch(() => formData.value.creditCard.cvv, (val) => {
+  const formatted = formatCardCVV(val || '');
+  if (formatted !== val) formData.value.creditCard.cvv = formatted;
+});
+
+watch(() => formData.value.creditCard.expiry, (val) => {
+  const formatted = formatCardExpiry(val || '');
+  if (formatted !== val) formData.value.creditCard.expiry = formatted;
+});
+
 // Métodos
 function goToNextStep() {
   if (formStep.value < 3) {
@@ -309,7 +358,7 @@ async function submitOrder() {
       addressNumber: formData.value.address.number,
       province: formData.value.address.district,
       postalCode: formData.value.address.zipCode,
-      nuvemshop_id: '0' // Adicionando o campo obrigatório nuvemshop_id
+  // nuvemshop_id removido: não enviar '0' como default
     };
 
     console.log('Criando comprador:', shopperData);
