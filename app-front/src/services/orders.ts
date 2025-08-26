@@ -9,15 +9,12 @@ export interface Product {
   description: string;
 }
 
-export interface SimulationOrder {
-  seller_id: number;
-  shopper_id: number;
-  products: number[];
-  value: number;
-  cycle: string;
-  next_due_date: string;
-  billing_type: string;
-  customer_info: any; // Garantindo que este campo esteja presente na simulação
+// Novo contrato do backend para criação de pedido
+export interface CreateOrderPayload {
+  product_id: number; // obrigatório
+  shopper_id: number; // obrigatório
+  value?: number;     // opcional
+  customer_info?: any; // opcional
 }
 
 export interface Order {
@@ -42,19 +39,19 @@ export interface Order {
 export async function fetchProducts(): Promise<Product[]> {
   try {
     const response = await fetchWithTimeout(buildApiUrl('app/products'));
-    
+
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (Array.isArray(data)) {
       return data;
     } else if (data && Array.isArray(data.data)) {
       return data.data;
     }
-    
+
     return [];
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
@@ -62,26 +59,35 @@ export async function fetchProducts(): Promise<Product[]> {
   }
 }
 
-export async function createOrder(orderData: SimulationOrder): Promise<any> {
+// Aceita payload novo e faz compat com legado transformando internamente
+export async function createOrder(orderData: CreateOrderPayload): Promise<any> {
   try {
-    console.log('Enviando dados para criação de pedido:', orderData);
-    
+    // Garante apenas os campos permitidos pelo novo contrato
+    const payload: CreateOrderPayload = {
+      product_id: Number(orderData.product_id),
+      shopper_id: Number(orderData.shopper_id),
+      value: typeof orderData.value === 'number' ? orderData.value : undefined,
+      customer_info: orderData.customer_info ?? undefined,
+    };
+
+    console.log('Enviando dados para criação de pedido:', payload);
+
     const response = await fetchWithTimeout(buildApiUrl('app/orders'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(orderData),
+      body: JSON.stringify(payload),
     });
-    
+
     // Captura o texto da resposta primeiro
     const responseText = await response.text();
     console.log('Resposta bruta da API:', responseText);
-    
+
     if (!response.ok) {
       return handleApiError(response, responseText);
     }
-    
+
     // Converte texto para JSON apenas se a resposta for OK
     try {
       // Retorna o objeto completo para que o componente possa extrair o que precisar
@@ -106,7 +112,7 @@ export async function deleteOrder(id: number | string): Promise<boolean> {
     const response = await fetchWithTimeout(buildApiUrl(`app/orders/${id}`), {
       method: 'DELETE',
     });
-    
+
     return response.ok;
   } catch (error) {
     console.error(`Erro ao excluir pedido ${id}:`, error);
@@ -122,13 +128,13 @@ export async function deleteOrder(id: number | string): Promise<boolean> {
 export async function fetchOrderById(id: number | string): Promise<Order | null> {
   try {
     const response = await fetchWithTimeout(buildApiUrl(`app/orders/${id}`));
-    
+
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (data && data.id) {
       return data;
     } else if (data && data.data && data.data.id) {
@@ -149,13 +155,13 @@ export async function fetchOrderById(id: number | string): Promise<Order | null>
 export async function fetchOrders(): Promise<Order[]> {
   try {
     const response = await fetchWithTimeout(buildApiUrl('app/orders'));
-    
+
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (Array.isArray(data)) {
       return data;
     } else if (data && Array.isArray(data.data)) {

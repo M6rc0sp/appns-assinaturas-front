@@ -14,7 +14,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
       <p class="subtitle">Uma plataforma completa para gerenciar assinaturas, pagamentos e clientes em um só lugar.</p>
       <div class="cta-buttons">
         <RouterLink to="/subscriptions" class="cta-button">Ver assinaturas</RouterLink>
-        <RouterLink to="/simulate" class="cta-button secondary">Simular assinatura</RouterLink>
+        
       </div>
     </div>
     
@@ -28,9 +28,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
       
       <div class="feature-card">
         <div class="icon">🔄</div>
-        <h2>Simulação</h2>
-        <p>Simule o processo de assinatura do início ao fim. Crie pedidos e assinaturas para testar o fluxo completo.</p>
-        <RouterLink to="/simulate" class="btn-primary">Simular agora</RouterLink>
+        
       </div>
       
       <div class="feature-card">
@@ -52,11 +50,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
           <router-link to="/subscriptions" class="btn btn-primary">Ver Assinaturas</router-link>
         </div>
 
-        <div class="feature-card">
-          <h3>Simular Assinatura</h3>
-          <p>Simule novos planos de assinatura e veja como eles funcionariam antes de implementá-los.</p>
-          <router-link to="/simulate" class="btn btn-outline-primary">Simular</router-link>
-        </div>
+        
 
         <div class="feature-card">
           <h3>Área do Cliente</h3>

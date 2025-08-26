@@ -44,7 +44,7 @@ function logout() {
           <template v-if="isAuthenticated">
             <li><RouterLink to="/" @click="closeMenu" :class="{ active: route.path === '/' }">Home</RouterLink></li>
             <li><RouterLink to="/subscriptions" @click="closeMenu" :class="{ active: route.path.startsWith('/subscriptions') }">Assinaturas</RouterLink></li>
-            <li><RouterLink to="/simulate" @click="closeMenu" :class="{ active: route.path.startsWith('/simulate') }">Simular</RouterLink></li>
+            
             <li><RouterLink to="/management" @click="closeMenu" :class="{ active: route.path.startsWith('/management') }">Gerenciamento</RouterLink></li>
             <li><RouterLink to="/about" @click="closeMenu" :class="{ active: route.path.startsWith('/about') }">Sobre</RouterLink></li>
           </template>

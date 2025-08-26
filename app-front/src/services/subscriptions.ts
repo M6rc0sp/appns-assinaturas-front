@@ -82,7 +82,7 @@ export interface LegacySubscription {
 export async function createShopperSubscription(shopperData: any): Promise<any> {
   try {
     const endpoint = 'app/shopper-subscriptions';
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint), {
       method: 'POST',
       headers: {
@@ -90,13 +90,13 @@ export async function createShopperSubscription(shopperData: any): Promise<any> 
       },
       body: JSON.stringify(shopperData)
     });
-    
+
     const responseText = await response.text();
-    
+
     if (!response.ok) {
       return handleApiError(response, responseText);
     }
-    
+
     return responseText ? JSON.parse(responseText) : null;
   } catch (error) {
     console.error('Erro ao criar assinatura para o comprador:', error);
@@ -109,7 +109,7 @@ export async function createShopperSubscription(shopperData: any): Promise<any> 
  * @param orderId ID do pedido
  * @returns Detalhes da assinatura criada
  */
-export async function createShopperSubscriptionFromOrder(orderId: string | number): Promise<any> {
+export async function createShopperSubscriptionFromOrder(orderId: string | number, body?: any): Promise<any> {
   try {
     // Corrigido para o endpoint correto
     const endpoint = `app/shopper-subscriptions/order/${orderId}`;
@@ -117,7 +117,8 @@ export async function createShopperSubscriptionFromOrder(orderId: string | numbe
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: body ? JSON.stringify(body) : undefined
     });
     return handleApiResponse(response);
   } catch (error) {
@@ -134,12 +135,12 @@ export async function createShopperSubscriptionFromOrder(orderId: string | numbe
 export async function fetchSubscriptions(type: SubscriptionType = SubscriptionType.SHOPPER): Promise<Subscription[]> {
   try {
     // URL é diferente dependendo do tipo de assinatura
-    const endpoint = type === SubscriptionType.SHOPPER 
+    const endpoint = type === SubscriptionType.SHOPPER
       ? 'app/shopper-subscriptions'
       : 'app/seller-subscriptions';
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint));
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error(`Erro ao buscar assinaturas (${type}):`, error);
@@ -162,30 +163,30 @@ export async function fetchShopperSubscriptions(shopperId: number): Promise<Shop
  * @returns Detalhes da assinatura
  */
 export async function fetchSubscriptionById(
-  id: string | number, 
+  id: string | number,
   type: SubscriptionType = SubscriptionType.SHOPPER
 ): Promise<Subscription | null> {
   try {
     // URL é diferente dependendo do tipo de assinatura
-    const endpoint = type === SubscriptionType.SHOPPER 
+    const endpoint = type === SubscriptionType.SHOPPER
       ? `app/shopper-subscriptions/${id}`
       : `app/seller-subscriptions/${id}`;
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint));
-    
+
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Normaliza a resposta de acordo com a estrutura
     if (data && data.success && data.data) {
       return data.data;
     } else if (data && data.id) {
       return data;
     }
-    
+
     return null;
   } catch (error) {
     console.error(`Erro ao buscar assinatura ${id} (${type}):`, error);
@@ -200,17 +201,17 @@ export async function fetchSubscriptionById(
  * @returns Lista de assinaturas do cliente
  */
 export async function fetchSubscriptionsByCustomer(
-  customerId: string, 
+  customerId: string,
   type: SubscriptionType = SubscriptionType.SHOPPER
 ): Promise<Subscription[]> {
   try {
     // URL é diferente dependendo do tipo de assinatura
-    const endpoint = type === SubscriptionType.SHOPPER 
+    const endpoint = type === SubscriptionType.SHOPPER
       ? `app/shopper-subscriptions/customer/${customerId}`
       : `app/seller-subscriptions/customer/${customerId}`;
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint));
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error(`Erro ao buscar assinaturas do cliente ${customerId} (${type}):`, error);
@@ -230,17 +231,17 @@ export async function cancelSubscription(
 ): Promise<any> {
   try {
     // URL é diferente dependendo do tipo de assinatura
-    const endpoint = type === SubscriptionType.SHOPPER 
+    const endpoint = type === SubscriptionType.SHOPPER
       ? `app/shopper-subscriptions/${subscriptionId}/cancel`
       : `app/seller-subscriptions/${subscriptionId}/cancel`;
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       }
     });
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error(`Erro ao cancelar assinatura ${subscriptionId} (${type}):`, error);
@@ -260,17 +261,17 @@ export async function reactivateSubscription(
 ): Promise<any> {
   try {
     // URL é diferente dependendo do tipo de assinatura
-    const endpoint = type === SubscriptionType.SHOPPER 
+    const endpoint = type === SubscriptionType.SHOPPER
       ? `app/shopper-subscriptions/${subscriptionId}/reactivate`
       : `app/seller-subscriptions/${subscriptionId}/reactivate`;
-    
+
     const response = await fetchWithTimeout(buildApiUrl(endpoint), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       }
     });
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error(`Erro ao reativar assinatura ${subscriptionId} (${type}):`, error);

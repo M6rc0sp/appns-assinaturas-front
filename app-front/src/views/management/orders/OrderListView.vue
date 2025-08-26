@@ -48,7 +48,6 @@ onMounted(() => {
     
     <div v-else-if="orders.length === 0" class="empty-container">
       <p>Nenhum pedido encontrado.</p>
-      <RouterLink to="/simulate" class="btn-add">Simular novo pedido</RouterLink>
     </div>
     
     <div v-else>

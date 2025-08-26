@@ -21,12 +21,12 @@ const router = useRouter();
 const cartStore = useCartStore();
 
 // Composable para métodos de pagamento
-const { 
-  availablePaymentMethodsWithLabels, 
-  isLoading: loadingPaymentMethods, 
+const {
+  availablePaymentMethodsWithLabels,
+  isLoading: loadingPaymentMethods,
   error: paymentMethodsError,
   fetchPaymentMethods,
-  isMethodAvailable 
+  isMethodAvailable
 } = usePaymentMethods();
 
 // ID do seller (será obtido do produto dinamicamente)
@@ -69,31 +69,31 @@ const errors = ref<Record<string, string>>({});
 const totalItems = computed(() => cartStore.totalItems);
 const finalPrice = computed(() => cartStore.finalPrice);
 const canProceedToStep2 = computed(() => {
-  return formData.value.fullName && 
-    formData.value.email && 
+  return formData.value.fullName &&
+    formData.value.email &&
     formData.value.document &&
     formData.value.phone;
 });
 
 const canProceedToStep3 = computed(() => {
   const address = formData.value.address;
-  return address.street && 
-    address.number && 
-    address.district && 
-    address.city && 
-    address.state && 
+  return address.street &&
+    address.number &&
+    address.district &&
+    address.city &&
+    address.state &&
     address.zipCode;
 });
 
 const canSubmitOrder = computed(() => {
   if (!formData.value.terms) return false;
   if (!sellerId.value) return false; // Garantir que temos um seller_id
-  
+
   if (formData.value.paymentMethod === 'credit_card') {
     const cc = formData.value.creditCard;
     return cc.number && cc.name && cc.expiry && cc.cvv;
   }
-  
+
   return true;
 });
 
@@ -101,10 +101,10 @@ const canSubmitOrder = computed(() => {
 function formatZipCode(zipCode: string): string {
   // Remove todos os caracteres não numéricos
   const numbers = zipCode.replace(/\D/g, '');
-  
+
   // Limita a 8 dígitos
   const limitedNumbers = numbers.slice(0, 8);
-  
+
   // Formata como 00000-000 se tiver pelo menos 5 dígitos
   if (limitedNumbers.length > 5) {
     return `${limitedNumbers.slice(0, 5)}-${limitedNumbers.slice(5)}`;
@@ -186,7 +186,7 @@ function goToPreviousStep() {
 
 async function searchAddressByZipCode() {
   const zipCode = formData.value.address.zipCode.replace(/\D/g, ''); // Remove non-digits
-  
+
   // Validate CEP format (8 digits)
   if (zipCode.length !== 8) {
     errors.value.zipCode = 'CEP inválido (deve ter 8 dígitos)';
@@ -197,20 +197,20 @@ async function searchAddressByZipCode() {
     formData.value.address.state = '';
     return;
   }
-  
+
   loadingZipCode.value = true;
   errors.value.zipCode = ''; // Clear previous errors
-  
+
   try {
     const response = await fetch(`https://viacep.com.br/ws/${zipCode}/json/`);
-    
+
     if (!response.ok) {
       // Handle HTTP errors (like 400 Bad Request for invalid format, though we validated)
       throw new Error(`Erro HTTP: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Check if ViaCEP returned an error flag (CEP not found)
     if (data.erro) {
       errors.value.zipCode = 'CEP não encontrado.';
@@ -230,7 +230,7 @@ async function searchAddressByZipCode() {
   } catch (error) {
     console.error('Erro ao consultar CEP:', error);
     errors.value.zipCode = 'Erro ao consultar CEP. Tente novamente.';
-     // Clear fields on error too
+    // Clear fields on error too
     formData.value.address.street = '';
     formData.value.address.district = '';
     formData.value.address.city = '';
@@ -248,21 +248,21 @@ function backToCatalog() {
 async function retrySellerCheck() {
   errors.value.submit = '';
   sellerId.value = null;
-  
+
   try {
     const firstProduct = cartStore.items[0]?.product;
     if (firstProduct && firstProduct.id) {
       console.log('[DEBUG] Tentando novamente buscar seller para produto:', firstProduct.id);
-      
+
       const productSellerData = await fetchProductSeller(firstProduct.id);
-      
+
       if (productSellerData) {
         sellerId.value = productSellerData.sellerId;
         console.log('[DEBUG] Seller ID obtido na tentativa:', sellerId.value);
-        
+
         // Buscar métodos de pagamento disponíveis para o seller
         await fetchPaymentMethods(sellerId.value.toString());
-        
+
         if (availablePaymentMethodsWithLabels.value.length > 0) {
           if (!isMethodAvailable(formData.value.paymentMethod)) {
             formData.value.paymentMethod = availablePaymentMethodsWithLabels.value[0].code;
@@ -274,12 +274,12 @@ async function retrySellerCheck() {
     }
   } catch (error) {
     console.error('[DEBUG] Erro ao tentar novamente buscar seller:', error);
-    
+
     let errorMessage = 'Produto temporariamente indisponível.';
-    
+
     if (error instanceof Error) {
       const errorMsg = error.message.toLowerCase();
-      
+
       if (errorMsg.includes('suspensa') || errorMsg.includes('suspended')) {
         errorMessage = 'Este produto não está disponível pois a conta do vendedor está suspensa.';
       } else if (errorMsg.includes('expirou') || errorMsg.includes('expired')) {
@@ -294,7 +294,7 @@ async function retrySellerCheck() {
         errorMessage = error.message || errorMessage;
       }
     }
-    
+
     errors.value.submit = errorMessage;
     sellerId.value = null;
   }
@@ -302,22 +302,22 @@ async function retrySellerCheck() {
 
 async function submitOrder() {
   if (processing.value) return;
-  
+
   // Validações finais
   errors.value = {};
-  
+
   if (!formData.value.terms) {
     errors.value.terms = 'Você precisa aceitar os termos para continuar.';
     return;
   }
-  
+
   if (!sellerId.value) {
     errors.value.submit = 'Erro: Informações do vendedor não encontradas. Recarregue a página e tente novamente.';
     return;
   }
-  
+
   processing.value = true;
-  
+
   try {
     // 1. Preparar os dados do cliente
     const customerInfo = {
@@ -358,16 +358,16 @@ async function submitOrder() {
       addressNumber: formData.value.address.number,
       province: formData.value.address.district,
       postalCode: formData.value.address.zipCode,
-  // nuvemshop_id removido: não enviar '0' como default
+      // nuvemshop_id removido: não enviar '0' como default
     };
 
     console.log('Criando comprador:', shopperData);
     const shopperResponse = await createShopper(shopperData);
-    
+
     if (!shopperResponse || !shopperResponse.id) {
       throw new Error('Erro ao criar comprador: Resposta inválida da API');
     }
-    
+
     const shopperId = shopperResponse.id;
     console.log('Comprador criado com ID:', shopperId);
 
@@ -376,39 +376,67 @@ async function submitOrder() {
       throw new Error('Seller ID não encontrado. Verifique se há produtos no carrinho.');
     }
 
-    // 3. Formato correto para a API de pedidos (agora usando o shopperId válido)
+    // 3. Formato correto para a API de pedidos (novo contrato)
+    const productId = cartStore.items[0]?.product.id;
+    if (!productId) throw new Error('Produto inválido no carrinho.');
     const orderData = {
-      seller_id: sellerId.value, // Usando o seller_id obtido do produto
-      shopper_id: shopperId, // Usando o ID do comprador que acabamos de criar
-      products: cartStore.items.map(item => item.product.id), // Array de IDs de produto
+      product_id: productId,
+      shopper_id: shopperId,
       value: cartStore.finalPrice,
-      cycle: 'monthly', // Valor padrão ou defina baseado na escolha do usuário
-      next_due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0], // 30 dias a partir de hoje
-      billing_type: formData.value.paymentMethod, // Tipo de cobrança baseado no método de pagamento
-      customer_info: customerInfo // Informações completas do cliente
+      customer_info: customerInfo
     };
-    
+
     // 4. Chamada real para criar o pedido na API
     console.log('Enviando dados do pedido:', orderData);
     const orderResponse = await createOrder(orderData);
     console.log('Resposta da API de pedidos:', orderResponse);
-    
+
     if (!orderResponse || !orderResponse.success) {
       throw new Error('Erro ao criar pedido: ' + (orderResponse?.message || 'Resposta inválida da API'));
     }
-    
-    const orderId = orderResponse.data.id;
-    
-    // 5. Criar assinatura a partir do pedido
+
+    const orderId = orderResponse.data?.id || orderResponse.id;
+    if (!orderId) throw new Error('ID do pedido não retornado pela API.');
+
+    // 5. Criar assinatura a partir do pedido (novo contrato)
     console.log('Criando assinatura para o pedido:', orderId);
-    const subscriptionResult = await createShopperSubscriptionFromOrder(orderId);
-    
+    // Monta body para assinatura conforme método
+    let subscriptionBody: any = {};
+    const method = formData.value.paymentMethod;
+    if (method === 'credit_card') {
+      const [mm, yy] = (formData.value.creditCard.expiry || '').split('/');
+      subscriptionBody = {
+        billing_type: 'CREDIT_CARD',
+        creditCard: {
+          holderName: formData.value.creditCard.name,
+          number: formData.value.creditCard.number,
+          expiryMonth: mm?.padStart(2, '0') || '',
+          expiryYear: yy && yy.length === 2 ? `20${yy}` : yy || '',
+          ccv: formData.value.creditCard.cvv
+        },
+        creditCardHolderInfo: {
+          name: formData.value.fullName,
+          email: formData.value.email,
+          cpfCnpj: formData.value.document,
+          phone: formData.value.phone,
+          postalCode: formData.value.address.zipCode.replace(/\D/g, ''),
+          addressNumber: formData.value.address.number
+        }
+      };
+    } else if (method === 'pix') {
+      subscriptionBody = { billing_type: 'PIX' };
+    } else {
+      subscriptionBody = { billing_type: 'BOLETO' };
+    }
+
+    const subscriptionResult = await createShopperSubscriptionFromOrder(orderId, subscriptionBody);
+
     console.log('Resposta da API de assinaturas:', subscriptionResult);
-    
+
     if (!subscriptionResult) {
       throw new Error('Erro ao criar assinatura: Resposta inválida da API');
     }
-    
+
     // 6. Prepara os dados para a página de sucesso
     const orderDetails = {
       subscription_id: subscriptionResult.id,
@@ -421,13 +449,13 @@ async function submitOrder() {
         quantity: item.quantity
       }))
     };
-    
+
     // 7. Armazena no localStorage para uso na página de sucesso
     localStorage.setItem('appns_last_order', JSON.stringify(orderDetails));
-    
+
     // 8. Limpa o carrinho
     cartStore.clearCart();
-    
+
     // 9. Redireciona para a página de sucesso
     router.push('/success');
   } catch (error) {
@@ -447,23 +475,23 @@ onMounted(async () => {
     // router.push('/catalog'); // Removido catálogo
     return;
   }
-  
+
   try {
     // Buscar o seller_id do primeiro produto no carrinho
     const firstProduct = cartStore.items[0]?.product;
     if (firstProduct && firstProduct.id) {
       console.log('[DEBUG] Buscando seller para produto:', firstProduct.id);
-      
+
       try {
         const productSellerData = await fetchProductSeller(firstProduct.id);
-        
+
         if (productSellerData) {
           sellerId.value = productSellerData.sellerId;
           console.log('[DEBUG] Seller ID obtido:', sellerId.value);
-          
+
           // Buscar métodos de pagamento disponíveis para o seller
           await fetchPaymentMethods(sellerId.value.toString());
-          
+
           // Se nenhum método de pagamento estiver disponível ou o método atual não estiver disponível,
           // definir o primeiro método disponível como padrão
           if (availablePaymentMethodsWithLabels.value.length > 0) {
@@ -477,14 +505,14 @@ onMounted(async () => {
         }
       } catch (sellerError) {
         console.error('[DEBUG] Erro específico ao buscar seller:', sellerError);
-        
+
         // Verificar se o erro contém informações sobre status da assinatura
         let errorMessage = 'Produto temporariamente indisponível.';
-        
+
         if (sellerError instanceof Error) {
           // Se a mensagem de erro do backend contém informações específicas sobre o status
           const errorMsg = sellerError.message.toLowerCase();
-          
+
           if (errorMsg.includes('suspensa') || errorMsg.includes('suspended')) {
             errorMessage = 'Este produto não está disponível pois a conta do vendedor está suspensa.';
           } else if (errorMsg.includes('expirou') || errorMsg.includes('expired')) {
@@ -500,9 +528,9 @@ onMounted(async () => {
             errorMessage = sellerError.message || errorMessage;
           }
         }
-        
+
         errors.value.submit = errorMessage;
-        
+
         // Limpar dados relacionados ao seller já que não está disponível
         sellerId.value = null;
       }
@@ -519,7 +547,7 @@ onMounted(async () => {
 
 <template>
   <div class="app-area">
-    <div class="container p-4">      
+    <div class="container p-4">
       <!-- Passos do checkout -->
       <div class="checkout-steps mb-5">
         <div class="row justify-content-center">
@@ -531,21 +559,21 @@ onMounted(async () => {
               </div>
               <div class="step-line flex-grow-1"></div>
               <div class="step text-center flex-fill" :class="{ active: formStep >= 2, completed: formStep > 2 }">
-                 <!-- Removed step-number-wrapper -->
-                 <div class="step-number">2</div>
+                <!-- Removed step-number-wrapper -->
+                <div class="step-number">2</div>
                 <div class="step-label mt-2">Endereço</div>
               </div>
               <div class="step-line flex-grow-1"></div>
               <div class="step text-center flex-fill" :class="{ active: formStep >= 3 }">
-                 <!-- Removed step-number-wrapper -->
-                 <div class="step-number">3</div>
+                <!-- Removed step-number-wrapper -->
+                <div class="step-number">3</div>
                 <div class="step-label mt-2">Pagamento</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div class="row">
         <!-- Mensagem de erro global do seller -->
         <div v-if="errors.submit" class="col-12 mb-4">
@@ -567,187 +595,119 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-        
+
         <!-- Formulário de checkout -->
         <div class="col-lg-8">
           <div class="box p-4 p-md-5 mb-4 rounded shadow-sm" :class="{ 'disabled-form': errors.submit }">
             <!-- Passo 1: Dados pessoais -->
             <div v-if="formStep === 1">
               <h4 class="mb-4 checkout-step-title">Seus dados</h4>
-              
+
               <div class="row g-3">
                 <div class="col-12">
                   <label for="fullName" class="form-label fw-semibold">Nome completo</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="fullName"
-                    v-model="formData.fullName"
-                    :class="{ 'is-invalid': errors.fullName }"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="fullName" v-model="formData.fullName"
+                    :class="{ 'is-invalid': errors.fullName }">
                   <div v-if="errors.fullName" class="invalid-feedback">{{ errors.fullName }}</div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="email" class="form-label fw-semibold">E-mail</label>
-                  <input 
-                    type="email" 
-                    class="form-control form-control-lg" 
-                    id="email"
-                    v-model="formData.email"
-                    :class="{ 'is-invalid': errors.email }"
-                  >
+                  <input type="email" class="form-control form-control-lg" id="email" v-model="formData.email"
+                    :class="{ 'is-invalid': errors.email }">
                   <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
                 </div>
-                
+
                 <!-- Removido campo de confirmação de e-mail -->
-                
+
                 <div class="col-md-6">
                   <label for="document" class="form-label fw-semibold">CPF/CNPJ</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="document"
-                    v-model="formData.document"
-                    :class="{ 'is-invalid': errors.document }"
-                    placeholder="000.000.000-00"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="document" v-model="formData.document"
+                    :class="{ 'is-invalid': errors.document }" placeholder="000.000.000-00">
                   <div v-if="errors.document" class="invalid-feedback">{{ errors.document }}</div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="phone" class="form-label fw-semibold">Telefone</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="phone"
-                    v-model="formData.phone"
-                    :class="{ 'is-invalid': errors.phone }"
-                    placeholder="(00) 00000-0000"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="phone" v-model="formData.phone"
+                    :class="{ 'is-invalid': errors.phone }" placeholder="(00) 00000-0000">
                   <div v-if="errors.phone" class="invalid-feedback">{{ errors.phone }}</div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="birthdate" class="form-label fw-semibold">Data de nascimento</label>
-                  <input 
-                    type="date" 
-                    class="form-control form-control-lg" 
-                    id="birthdate"
-                    v-model="formData.birthdate"
-                    :class="{ 'is-invalid': errors.birthdate }"
-                  >
+                  <input type="date" class="form-control form-control-lg" id="birthdate" v-model="formData.birthdate"
+                    :class="{ 'is-invalid': errors.birthdate }">
                   <div v-if="errors.birthdate" class="invalid-feedback">{{ errors.birthdate }}</div>
                 </div>
               </div>
-              
+
               <div class="d-flex justify-content-between align-items-center mt-5 form-step-actions">
-                <button 
-                  @click="goToNextStep" 
-                  class="btn btn-primary btn-lg px-5"
-                  :disabled="!canProceedToStep2"
-                >
+                <button @click="goToNextStep" class="btn btn-primary btn-lg px-5" :disabled="!canProceedToStep2">
                   Continuar
                 </button>
               </div>
             </div>
-            
+
             <!-- Passo 2: Endereço -->
             <div v-if="formStep === 2">
               <h4 class="mb-4 checkout-step-title">Endereço de entrega</h4>
-              
+
               <div class="row g-3">
                 <div class="col-md-4">
                   <label for="zipCode" class="form-label fw-semibold">CEP</label>
                   <div class="input-group input-group-lg">
-                    <input 
-                      type="text" 
-                      class="form-control" 
-                      id="zipCode"
-                      v-model="formData.address.zipCode"
-                      :class="{ 'is-invalid': errors.zipCode }"
-                      placeholder="00000-000"
-                    >
-                    <button 
-                      class="btn btn-outline-secondary" 
-                      type="button" 
-                      @click="searchAddressByZipCode"
-                      :disabled="loadingZipCode"
-                    >
-                      <span v-if="loadingZipCode" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <input type="text" class="form-control" id="zipCode" v-model="formData.address.zipCode"
+                      :class="{ 'is-invalid': errors.zipCode }" placeholder="00000-000">
+                    <button class="btn btn-outline-secondary" type="button" @click="searchAddressByZipCode"
+                      :disabled="loadingZipCode">
+                      <span v-if="loadingZipCode" class="spinner-border spinner-border-sm" role="status"
+                        aria-hidden="true"></span>
                       <span v-else>Buscar</span>
                     </button>
                   </div>
                   <!-- Moved outside input-group -->
                   <div v-if="errors.zipCode" class="invalid-feedback d-block">{{ errors.zipCode }}</div>
                 </div>
-                
+
                 <div class="col-md-8">
                   <label for="street" class="form-label fw-semibold">Rua/Avenida</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="street"
-                    v-model="formData.address.street"
-                    :class="{ 'is-invalid': errors.street }"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="street" v-model="formData.address.street"
+                    :class="{ 'is-invalid': errors.street }">
                   <div v-if="errors.street" class="invalid-feedback">{{ errors.street }}</div>
                 </div>
-                
+
                 <div class="col-md-4">
                   <label for="number" class="form-label fw-semibold">Número</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="number"
-                    v-model="formData.address.number"
-                    :class="{ 'is-invalid': errors.number }"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="number" v-model="formData.address.number"
+                    :class="{ 'is-invalid': errors.number }">
                   <div v-if="errors.number" class="invalid-feedback">{{ errors.number }}</div>
                 </div>
-                
+
                 <div class="col-md-8">
                   <label for="complement" class="form-label fw-semibold">Complemento (opcional)</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="complement"
-                    v-model="formData.address.complement"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="complement"
+                    v-model="formData.address.complement">
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="district" class="form-label fw-semibold">Bairro</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="district"
-                    v-model="formData.address.district"
-                    :class="{ 'is-invalid': errors.district }"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="district"
+                    v-model="formData.address.district" :class="{ 'is-invalid': errors.district }">
                   <div v-if="errors.district" class="invalid-feedback">{{ errors.district }}</div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="city" class="form-label fw-semibold">Cidade</label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="city"
-                    v-model="formData.address.city"
-                    :class="{ 'is-invalid': errors.city }"
-                  >
+                  <input type="text" class="form-control form-control-lg" id="city" v-model="formData.address.city"
+                    :class="{ 'is-invalid': errors.city }">
                   <div v-if="errors.city" class="invalid-feedback">{{ errors.city }}</div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="state" class="form-label fw-semibold">Estado</label>
-                  <select 
-                    class="form-select form-select-lg" 
-                    id="state"
-                    v-model="formData.address.state"
-                    :class="{ 'is-invalid': errors.state }"
-                  >
+                  <select class="form-select form-select-lg" id="state" v-model="formData.address.state"
+                    :class="{ 'is-invalid': errors.state }">
                     <option value="" disabled>Selecione...</option>
                     <option value="AC">Acre</option>
                     <option value="AL">Alagoas</option>
@@ -780,208 +740,174 @@ onMounted(async () => {
                   <div v-if="errors.state" class="invalid-feedback">{{ errors.state }}</div>
                 </div>
               </div>
-              
+
               <div class="d-flex justify-content-between align-items-center mt-5 form-step-actions">
                 <button @click="goToPreviousStep" class="btn btn-outline-secondary btn-lg px-4">
                   Voltar
                 </button>
-                <button 
-                  @click="goToNextStep" 
-                  class="btn btn-primary btn-lg px-5 ms-3"
-                  :disabled="!canProceedToStep3"
-                >
+                <button @click="goToNextStep" class="btn btn-primary btn-lg px-5 ms-3" :disabled="!canProceedToStep3">
                   Continuar
                 </button>
               </div>
             </div>
-            
+
             <!-- Passo 3: Pagamento -->
             <div v-if="formStep === 3">
               <h4 class="mb-4 checkout-step-title">Forma de pagamento</h4>
-              
+
               <div class="payment-methods mb-4">
                 <!-- Mensagem de carregamento -->
                 <div v-if="loadingPaymentMethods" class="text-center py-3">
                   <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
                   <span>Carregando métodos de pagamento...</span>
                 </div>
-                
+
                 <!-- Erro ao carregar métodos de pagamento -->
                 <div v-else-if="paymentMethodsError" class="alert alert-warning">
                   {{ paymentMethodsError }}
                 </div>
-                
+
                 <!-- Métodos de pagamento disponíveis -->
                 <template v-else>
-                  <div v-for="method in availablePaymentMethodsWithLabels" 
-                       :key="method.code" 
-                       class="form-check form-check-inline payment-option">
-                    <input 
-                      class="form-check-input" 
-                      type="radio" 
-                      name="paymentMethod"
-                      :id="`${method.code}Payment`"
-                      :value="method.code"
-                      v-model="formData.paymentMethod"
-                    >
+                  <div v-for="method in availablePaymentMethodsWithLabels" :key="method.code"
+                    class="form-check form-check-inline payment-option">
+                    <input class="form-check-input" type="radio" name="paymentMethod" :id="`${method.code}Payment`"
+                      :value="method.code" v-model="formData.paymentMethod">
                     <label class="form-check-label payment-label" :for="`${method.code}Payment`">
                       <span class="material-symbols-outlined me-2">{{ method.icon }}</span>
                       {{ method.label }}
                     </label>
                   </div>
-                  
+
                   <!-- Mensagem quando nenhum método está disponível -->
                   <div v-if="availablePaymentMethodsWithLabels.length === 0" class="alert alert-info">
                     Nenhum método de pagamento disponível no momento.
                   </div>
                 </template>
               </div>
-              
+
               <!-- Formulário para cartão de crédito -->
               <div v-if="formData.paymentMethod === 'credit_card'" class="credit-card-form">
                 <div class="row g-3">
                   <div class="col-12">
                     <label for="cardNumber" class="form-label">Número do cartão</label>
-                    <input 
-                      type="text" 
-                      class="form-control form-control-lg" 
-                      id="cardNumber"
-                      v-model="formData.creditCard.number"
-                      :class="{ 'is-invalid': errors.cardNumber }"
-                      placeholder="0000 0000 0000 0000"
-                    >
+                    <input type="text" class="form-control form-control-lg" id="cardNumber"
+                      v-model="formData.creditCard.number" :class="{ 'is-invalid': errors.cardNumber }"
+                      placeholder="0000 0000 0000 0000">
                     <div v-if="errors.cardNumber" class="invalid-feedback">{{ errors.cardNumber }}</div>
                   </div>
-                  
+
                   <div class="col-12">
                     <label for="cardName" class="form-label">Nome impresso no cartão</label>
-                    <input 
-                      type="text" 
-                      class="form-control form-control-lg" 
-                      id="cardName"
-                      v-model="formData.creditCard.name"
-                      :class="{ 'is-invalid': errors.cardName }"
-                    >
+                    <input type="text" class="form-control form-control-lg" id="cardName"
+                      v-model="formData.creditCard.name" :class="{ 'is-invalid': errors.cardName }">
                     <div v-if="errors.cardName" class="invalid-feedback">{{ errors.cardName }}</div>
                   </div>
-                  
+
                   <div class="col-md-6">
                     <label for="cardExpiry" class="form-label">Validade (MM/AA)</label>
-                    <input 
-                      type="text" 
-                      class="form-control form-control-lg" 
-                      id="cardExpiry"
-                      v-model="formData.creditCard.expiry"
-                      :class="{ 'is-invalid': errors.cardExpiry }"
-                      placeholder="MM/AA"
-                    >
+                    <input type="text" class="form-control form-control-lg" id="cardExpiry"
+                      v-model="formData.creditCard.expiry" :class="{ 'is-invalid': errors.cardExpiry }"
+                      placeholder="MM/AA">
                     <div v-if="errors.cardExpiry" class="invalid-feedback">{{ errors.cardExpiry }}</div>
                   </div>
-                  
+
                   <div class="col-md-6">
                     <label for="cardCVV" class="form-label">CVV</label>
-                    <input 
-                      type="text" 
-                      class="form-control form-control-lg" 
-                      id="cardCVV"
-                      v-model="formData.creditCard.cvv"
-                      :class="{ 'is-invalid': errors.cardCVV }"
-                      placeholder="000"
-                      maxlength="4"
-                    >
+                    <input type="text" class="form-control form-control-lg" id="cardCVV"
+                      v-model="formData.creditCard.cvv" :class="{ 'is-invalid': errors.cardCVV }" placeholder="000"
+                      maxlength="4">
                     <div v-if="errors.cardCVV" class="invalid-feedback">{{ errors.cardCVV }}</div>
                   </div>
                 </div>
               </div>
-              
+
               <!-- Instruções para PIX -->
               <div v-else-if="formData.paymentMethod === 'pix'" class="pix-instructions">
                 <div class="alert alert-info">
                   <p class="mb-0">Após finalizar o pedido, você receberá o QR Code PIX para pagamento.</p>
                 </div>
               </div>
-              
+
               <!-- Instruções para Boleto -->
-              <div v-else-if="formData.paymentMethod === 'boleto' || formData.paymentMethod === 'bank_slip'" class="bank-slip-instructions">
+              <div v-else-if="formData.paymentMethod === 'boleto' || formData.paymentMethod === 'bank_slip'"
+                class="bank-slip-instructions">
                 <div class="alert alert-info">
                   <p class="mb-0">Após finalizar o pedido, você receberá o boleto bancário por e-mail.</p>
                 </div>
               </div>
-              
+
               <!-- Termos e condições -->
               <div class="terms-and-conditions mt-4">
                 <div class="form-check">
-                  <input 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    id="termsCheck"
-                    v-model="formData.terms"
-                    :class="{ 'is-invalid': errors.terms }"
-                  >
+                  <input class="form-check-input" type="checkbox" id="termsCheck" v-model="formData.terms"
+                    :class="{ 'is-invalid': errors.terms }">
                   <label class="form-check-label" for="termsCheck">
-                    Li e concordo com os <a href="#" class="text-primary">Termos e Condições</a> e <a href="#" class="text-primary">Política de Privacidade</a>
+                    Li e concordo com os <a href="#" class="text-primary">Termos e Condições</a> e <a href="#"
+                      class="text-primary">Política de Privacidade</a>
                   </label>
                   <div v-if="errors.terms" class="invalid-feedback">{{ errors.terms }}</div>
                 </div>
               </div>
-              
+
               <!-- Erro geral -->
               <div v-if="errors.submit" class="alert alert-danger mt-3">
                 {{ errors.submit }}
               </div>
-              
+
               <div class="d-flex justify-content-between align-items-center mt-4 form-step-actions">
                 <button @click="goToPreviousStep" class="btn btn-outline-secondary btn-lg">
                   Voltar
                 </button>
-                <button 
-                  @click="submitOrder" 
-                  class="btn btn-primary btn-lg ms-3"
-                  :disabled="!canSubmitOrder || processing"
-                >
-                  <span v-if="processing" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <button @click="submitOrder" class="btn btn-primary btn-lg ms-3"
+                  :disabled="!canSubmitOrder || processing">
+                  <span v-if="processing" class="spinner-border spinner-border-sm me-2" role="status"
+                    aria-hidden="true"></span>
                   Finalizar Assinatura
                 </button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Resumo do pedido -->
         <div class="col-lg-4">
           <div class="box p-4 order-summary">
             <h5 class="mb-4 order-summary-title">Resumo do pedido</h5>
-            
+
             <div v-if="cartStore.items.length === 0" class="text-center text-muted py-3">
               Seu carrinho está vazio.
             </div>
 
             <ul class="list-unstyled mb-0 order-summary-list">
-              <li v-for="(item, index) in cartStore.items" :key="index" class="cart-item order-summary-flex align-items-center py-3" :class="{ 'border-bottom': index < cartStore.items.length - 1 }">
+              <li v-for="(item, index) in cartStore.items" :key="index"
+                class="cart-item order-summary-flex align-items-center py-3"
+                :class="{ 'border-bottom': index < cartStore.items.length - 1 }">
                 <div class="order-summary-img-wrap">
-                  <img 
+                  <img
                     :src="item.product.images && item.product.images.length ? item.product.images[0] : 'https://placehold.co/60x60?text=Sem+Imagem'"
-                    class="img-fluid cart-item-image" 
-                    :alt="item.product.name"
-                  >
+                    class="img-fluid cart-item-image" :alt="item.product.name">
                 </div>
                 <div class="flex-grow-1 order-summary-info ms-3">
                   <div class="cart-item-name fw-semibold" style="font-size: 1.05rem;">{{ item.product.name }}</div>
-                  <div class="cart-item-description text-muted" v-if="item.product.description" style="font-size: 0.92rem; line-height: 1.3;">{{ item.product.description }}</div>
+                  <div class="cart-item-description text-muted" v-if="item.product.description"
+                    style="font-size: 0.92rem; line-height: 1.3;">{{ item.product.description }}</div>
                 </div>
                 <div class="cart-item-price text-end ms-2" style="min-width: 90px;">
-                  <span class="fw-bold" style="font-size: 1.08rem; color: #222;">{{ formatCurrency(item.product.sale_price || item.product.price) }}/mês</span>
+                  <span class="fw-bold" style="font-size: 1.08rem; color: #222;">{{
+                    formatCurrency(item.product.sale_price ||
+                      item.product.price) }}/mês</span>
                 </div>
               </li>
             </ul>
-            
+
             <div class="totals mt-4 pt-3 border-top">
               <div class="total d-flex justify-content-between fw-bold">
                 <span>Total:</span>
                 <span>{{ formatCurrency(finalPrice) }}/mês</span>
               </div>
             </div>
-            
+
             <div class="info-box mt-4">
               <ul class="list-unstyled mb-0">
                 <li class="d-flex align-items-center mb-2 info-box-item">
@@ -1010,7 +936,7 @@ onMounted(async () => {
 .box {
   background-color: white;
   border-radius: 15px;
-  box-shadow: 0 2px 30px rgba(0,0,0,.04);
+  box-shadow: 0 2px 30px rgba(0, 0, 0, .04);
   padding: 24px 20px;
 }
 
@@ -1145,6 +1071,7 @@ onMounted(async () => {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1157,24 +1084,24 @@ onMounted(async () => {
     padding: 20px;
     gap: 12px;
   }
-  
+
   .error-icon-wrapper {
     width: 40px;
     height: 40px;
   }
-  
+
   .error-icon {
     font-size: 20px;
   }
-  
+
   .error-title {
     font-size: 1.1rem;
   }
-  
+
   .error-message {
     font-size: 0.9rem;
   }
-  
+
   .error-card-actions {
     padding: 12px 20px;
   }
@@ -1186,10 +1113,12 @@ onMounted(async () => {
 
 .checkout-steps-container {
   /* position: relative; /* No longer needed for line positioning */
-  padding: 0 10px; 
-  display: flex; 
-  align-items: center; /* Align items vertically in the center */
-  width: 100%; /* Ensure it takes full width */
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  /* Align items vertically in the center */
+  width: 100%;
+  /* Ensure it takes full width */
 }
 
 .step {
@@ -1198,9 +1127,11 @@ onMounted(async () => {
   align-items: center;
   /* position: relative; /* No longer needed */
   /* z-index: 1; /* No longer needed */
-  min-width: 80px; 
-  flex-basis: 0; /* Allow steps to shrink/grow */
-  flex-grow: 0; /* Steps themselves don't grow, lines do */
+  min-width: 80px;
+  flex-basis: 0;
+  /* Allow steps to shrink/grow */
+  flex-grow: 0;
+  /* Steps themselves don't grow, lines do */
 }
 
 /* REMOVED .step-number-wrapper styles */
@@ -1250,88 +1181,114 @@ onMounted(async () => {
 }
 
 .step-line {
-  flex-grow: 1; /* Fill space between steps */
+  flex-grow: 1;
+  /* Fill space between steps */
   height: 2px;
   background-color: #e9ecef;
-  margin: 0 5px; /* Add some horizontal margin around the line */
+  margin: 0 5px;
+  /* Add some horizontal margin around the line */
   /* REMOVED all absolute positioning properties */
-  align-self: center; /* Ensure line stays centered vertically */
-  margin-bottom: 1.5rem; /* Adjust to align with bottom of number/top of label roughly */
+  align-self: center;
+  /* Ensure line stays centered vertically */
+  margin-bottom: 1.5rem;
+  /* Adjust to align with bottom of number/top of label roughly */
 }
 
 .checkout-step-title {
-  font-size: 1.5rem; /* Aumenta o tamanho do título do passo */
+  font-size: 1.5rem;
+  /* Aumenta o tamanho do título do passo */
   font-weight: 600;
 }
 
 .order-summary-title {
-  font-size: 1.3rem; /* Aumenta o tamanho do título do resumo */
+  font-size: 1.3rem;
+  /* Aumenta o tamanho do título do resumo */
   font-weight: 600;
 }
 
 .form-label {
-  margin-bottom: 0.25rem; /* Reduz espaço abaixo do label */
+  margin-bottom: 0.25rem;
+  /* Reduz espaço abaixo do label */
   font-size: 0.95rem;
   font-weight: 500;
-  display: block; /* Garante que o label ocupe a linha */
+  display: block;
+  /* Garante que o label ocupe a linha */
 }
 
 /* Adiciona espaço abaixo dos campos de formulário */
-.row.g-3 > div {
-  margin-bottom: 0.75rem; /* Ajuste este valor conforme necessário */
+.row.g-3>div {
+  margin-bottom: 0.75rem;
+  /* Ajuste este valor conforme necessário */
 }
 
-.form-control, .form-select {
-  border-radius: 8px; /* Reduced border-radius */
+.form-control,
+.form-select {
+  border-radius: 8px;
+  /* Reduced border-radius */
   border: 1.5px solid #e0e0e0;
   background: #fafbfc;
   transition: box-shadow 0.2s, border-color 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  padding-left: 0.85rem; /* Slightly increased padding */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  padding-left: 0.85rem;
+  /* Slightly increased padding */
 }
 
 /* Increase height for large inputs/selects */
-.form-control-lg, .form-select-lg {
+.form-control-lg,
+.form-select-lg {
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
-  font-size: 1rem; /* Adjust font size if needed */
-  padding-left: 0.85rem; /* Slightly increased padding */
-  height: calc(1.5em + 1.2rem + 3px); /* Match Bootstrap's calculated height for -lg */
-  width: 100%; /* Make select fill column width */
+  font-size: 1rem;
+  /* Adjust font size if needed */
+  padding-left: 0.85rem;
+  /* Slightly increased padding */
+  height: calc(1.5em + 1.2rem + 3px);
+  /* Match Bootstrap's calculated height for -lg */
+  width: 100%;
+  /* Make select fill column width */
 }
 
 /* Adjust select arrow position */
 .form-select-lg {
-  background-position: right 1rem center; /* Increased distance from right edge */
+  background-position: right 1rem center;
+  /* Increased distance from right edge */
 }
 
 .input-group .form-control {
   /* Ensure input group inputs also get the radius adjustment if needed */
-  border-radius: 8px 0 0 8px; 
+  border-radius: 8px 0 0 8px;
 }
+
 .input-group .btn {
   border-radius: 0 8px 8px 0;
-  font-weight: 600; /* Mesmo peso dos outros botões */
+  font-weight: 600;
+  /* Mesmo peso dos outros botões */
   /* Ajuste padding se necessário para alinhar altura com input-group-lg */
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
-  border-color: #e0e0e0; /* Garante a mesma cor de borda */
+  border-color: #e0e0e0;
+  /* Garante a mesma cor de borda */
 }
 
-.btn-lg, .btn-primary, .btn-outline-secondary, .btn {
-  border-radius: 8px; /* Reduced border-radius */
+.btn-lg,
+.btn-primary,
+.btn-outline-secondary,
+.btn {
+  border-radius: 8px;
+  /* Reduced border-radius */
   font-weight: 600;
 }
 
 .order-summary {
   background: #fff;
   border-radius: 15px;
-  box-shadow: 0 2px 30px rgba(0,0,0,.04);
+  box-shadow: 0 2px 30px rgba(0, 0, 0, .04);
 }
 
 .cart-item {
-  gap: 0.75rem; 
-  padding: 0.75rem 0.25rem; /* Added vertical padding for card feel */
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem;
+  /* Added vertical padding for card feel */
 }
 
 .cart-item-image {
@@ -1340,7 +1297,8 @@ onMounted(async () => {
   object-fit: cover;
   border-radius: 8px;
   background: #f0f0f0;
-  flex-shrink: 0; /* Impede que a imagem encolha */
+  flex-shrink: 0;
+  /* Impede que a imagem encolha */
 }
 
 .cart-item-name {
@@ -1361,17 +1319,25 @@ onMounted(async () => {
 }
 
 .cart-item-remove-btn {
-  padding: 0.3rem 0.6rem; /* Adjusted padding */
-  line-height: 1; /* Adjusted for icon alignment */
-  border-radius: 6px; /* Slightly smaller radius for small button */
-  flex-shrink: 0; 
-  font-size: 0.8rem; /* Make text slightly smaller */
-  font-weight: 600; /* Bolder text */
+  padding: 0.3rem 0.6rem;
+  /* Adjusted padding */
+  line-height: 1;
+  /* Adjusted for icon alignment */
+  border-radius: 6px;
+  /* Slightly smaller radius for small button */
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  /* Make text slightly smaller */
+  font-weight: 600;
+  /* Bolder text */
   /* btn-danger styles will be applied */
 }
+
 .cart-item-remove-btn .material-symbols-outlined {
-  font-size: 1rem; /* Adjust icon size */
-  vertical-align: middle; /* Keep trying vertical align */
+  font-size: 1rem;
+  /* Adjust icon size */
+  vertical-align: middle;
+  /* Keep trying vertical align */
 }
 
 .totals {
@@ -1380,7 +1346,8 @@ onMounted(async () => {
 
 .total {
   color: #00d283;
-  font-size: 1.3rem; /* Aumenta o total */
+  font-size: 1.3rem;
+  /* Aumenta o total */
   font-weight: 600;
 }
 
@@ -1392,9 +1359,12 @@ onMounted(async () => {
 }
 
 .info-box ul {
-  list-style-type: none !important; /* Garante a remoção */
-  padding-left: 0 !important; /* Garante a remoção */
-  margin-bottom: 0; /* Garante que a ul não adicione margem extra */
+  list-style-type: none !important;
+  /* Garante a remoção */
+  padding-left: 0 !important;
+  /* Garante a remoção */
+  margin-bottom: 0;
+  /* Garante que a ul não adicione margem extra */
 }
 
 .info-box li {
@@ -1402,13 +1372,19 @@ onMounted(async () => {
 }
 
 .info-box .material-symbols-outlined {
-  font-size: 1.3rem; /* Ajusta tamanho dos ícones de info */
-  vertical-align: middle; /* Re-attempt vertical align */
-  line-height: 1; /* Ensure line height doesn't interfere */
-  flex-shrink: 0; /* Prevent icon shrinking */
+  font-size: 1.3rem;
+  /* Ajusta tamanho dos ícones de info */
+  vertical-align: middle;
+  /* Re-attempt vertical align */
+  line-height: 1;
+  /* Ensure line height doesn't interfere */
+  flex-shrink: 0;
+  /* Prevent icon shrinking */
 }
+
 .info-box-item span:last-child {
-  line-height: 1.4; /* Adjust text line-height slightly for better centering */
+  line-height: 1.4;
+  /* Adjust text line-height slightly for better centering */
 }
 
 .terms-and-conditions .form-check-input:checked {
@@ -1438,6 +1414,7 @@ onMounted(async () => {
   padding: 0 4px;
   transition: color 0.2s;
 }
+
 .cart-item-actions button:hover {
   color: #d32f2f;
 }
@@ -1453,7 +1430,8 @@ onMounted(async () => {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
   font-style: normal;
-  font-size: 20px; /* Adjust size as needed */
+  font-size: 20px;
+  /* Adjust size as needed */
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
@@ -1464,7 +1442,8 @@ onMounted(async () => {
   font-feature-settings: 'liga';
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
-  vertical-align: middle; /* Align icon better with text */
+  vertical-align: middle;
+  /* Align icon better with text */
 }
 
 /* Remove estilo de lista (Final Attempt) */
@@ -1474,9 +1453,11 @@ onMounted(async () => {
   padding-left: 0 !important;
   margin-left: 0 !important;
 }
+
 .order-summary-list li,
 .info-box li {
-  list-style: none !important; /* Apply directly to li */
+  list-style: none !important;
+  /* Apply directly to li */
   list-style-type: none !important;
   padding-left: 0 !important;
   margin-left: 0 !important;
@@ -1484,63 +1465,78 @@ onMounted(async () => {
 }
 
 /* Input Group Input (CEP) Alignment */
-.input-group-lg > .form-control {
-  padding-top: 0.6rem;    /* Match lg input padding */
-  padding-bottom: 0.6rem; /* Match lg input padding */
-  font-size: 1rem;        /* Match lg input font size */
-  height: auto;           /* Ensure height adjusts to padding */
+.input-group-lg>.form-control {
+  padding-top: 0.6rem;
+  /* Match lg input padding */
+  padding-bottom: 0.6rem;
+  /* Match lg input padding */
+  font-size: 1rem;
+  /* Match lg input font size */
+  height: auto;
+  /* Ensure height adjusts to padding */
 }
 
 /* Ensure button height matches adjusted input */
-.input-group-lg > .btn {
-  padding-top: 0.6rem;    
-  padding-bottom: 0.6rem; 
-  font-size: 1rem;        
-  line-height: 1.5;       
+.input-group-lg>.btn {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* Box containing the form steps */
-.col-lg-8 > .box {
-  max-height: 75vh; /* Limit height */
-  overflow-y: auto; /* Add scrollbar if content overflows */
-  display: flex; /* Use flexbox for internal layout */
-  flex-direction: column; /* Stack step divs vertically */
+.col-lg-8>.box {
+  max-height: 75vh;
+  /* Limit height */
+  overflow-y: auto;
+  /* Add scrollbar if content overflows */
+  display: flex;
+  /* Use flexbox for internal layout */
+  flex-direction: column;
+  /* Stack step divs vertically */
 }
 
 /* Ensure step divs take available space but don't force parent growth */
-.col-lg-8 > .box > div[v-if] {
-  flex-shrink: 0; /* Prevent steps from shrinking */
+.col-lg-8>.box>div[v-if] {
+  flex-shrink: 0;
+  /* Prevent steps from shrinking */
 }
 
 /* Ensure consistent height for all large elements */
 .form-control-lg,
 .form-select-lg,
-.input-group-lg > .form-control,
-.input-group-lg > .btn {
-  height: calc(1.5em + 1.2rem + 3px); /* Match Bootstrap's calculated height for -lg */
+.input-group-lg>.form-control,
+.input-group-lg>.btn {
+  height: calc(1.5em + 1.2rem + 3px);
+  /* Match Bootstrap's calculated height for -lg */
   /* Ensure vertical alignment within input-group */
-  display: flex; 
+  display: flex;
   align-items: center;
 }
 
 /* Specific adjustments might be needed for button text alignment */
-.input-group-lg > .btn {
-  justify-content: center; /* Center button text/spinner */
+.input-group-lg>.btn {
+  justify-content: center;
+  /* Center button text/spinner */
 }
 
 /* Input Group (CEP) Layout Fix */
 .input-group-lg {
   /* Ensure the group itself behaves correctly with flex */
   display: flex;
-  width: 100%; /* Group takes full width of its column */
-  height: calc(1.5em + 1.2rem + 3px); /* Match -lg height */
+  width: 100%;
+  /* Group takes full width of its column */
+  height: calc(1.5em + 1.2rem + 3px);
+  /* Match -lg height */
 }
 
-.input-group-lg > .form-control {
+.input-group-lg>.form-control {
   /* Input should grow, not have fixed 100% width */
-  flex: 1 1 auto; 
-  width: 1%; /* Fix for flex bug in some browsers */
-  height: 100%; /* Match parent height */
+  flex: 1 1 auto;
+  width: 1%;
+  /* Fix for flex bug in some browsers */
+  height: 100%;
+  /* Match parent height */
   /* Remove potentially conflicting height/padding styles if they were overriding */
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
@@ -1550,18 +1546,19 @@ onMounted(async () => {
   border-bottom-right-radius: 0;
 }
 
-.input-group-lg > .btn {
+.input-group-lg>.btn {
   /* Button should not grow/shrink */
   flex: 0 0 auto;
-  height: 100%; /* Match parent height */
+  height: 100%;
+  /* Match parent height */
   /* Ensure vertical alignment */
-  display: inline-flex; 
+  display: inline-flex;
   align-items: center;
   /* Ensure border radius is correct */
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   /* Reset padding if needed, let height and align-items handle centering */
-  padding: 0.6rem 0.75rem; 
+  padding: 0.6rem 0.75rem;
 }
 
 /* Remove previous height overrides if they conflict */
@@ -1577,18 +1574,20 @@ onMounted(async () => {
 /* Payment Method Radio Styling */
 .payment-methods {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  flex-wrap: wrap;
+  /* Allow wrapping on smaller screens */
   gap: 1rem;
 }
 
 .payment-option {
   /* Remove default inline padding/margin */
   padding-left: 0;
-  margin-right: 0; 
+  margin-right: 0;
 }
 
 .payment-option .form-check-input {
-  display: none; /* Hide default radio */
+  display: none;
+  /* Hide default radio */
 }
 
 .payment-option .payment-label {
@@ -1600,14 +1599,14 @@ onMounted(async () => {
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 .payment-option .payment-label:hover {
   border-color: #adb5bd;
 }
 
-.payment-option .form-check-input:checked + .payment-label {
+.payment-option .form-check-input:checked+.payment-label {
   border-color: #00d283;
   background-color: #e6fcf4;
   box-shadow: 0 2px 8px rgba(0, 210, 131, 0.1);
@@ -1615,9 +1614,12 @@ onMounted(async () => {
 }
 
 .payment-option .payment-label .material-symbols-outlined {
-  font-size: 1.8rem; /* Increased icon size */
-  margin-right: 0.75rem; /* More space between icon and text */
-  vertical-align: middle; /* Ensure alignment */
+  font-size: 1.8rem;
+  /* Increased icon size */
+  margin-right: 0.75rem;
+  /* More space between icon and text */
+  vertical-align: middle;
+  /* Ensure alignment */
 }
 
 .order-summary-flex {
@@ -1626,6 +1628,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.75rem;
 }
+
 .order-summary-img-wrap {
   flex-shrink: 0;
   display: flex;
@@ -1634,6 +1637,7 @@ onMounted(async () => {
   width: 64px;
   height: 64px;
 }
+
 .order-summary-img-wrap img {
   width: 64px;
   height: 64px;
@@ -1641,6 +1645,7 @@ onMounted(async () => {
   border-radius: 8px;
   background: #f0f0f0;
 }
+
 .order-summary-info {
   display: flex;
   flex-direction: column;

@@ -5,7 +5,6 @@ import LoginView from '../views/auth/LoginView.vue'
 import RegisterView from '../views/auth/RegisterView.vue'
 import SubscriptionListView from '@/views/subscriptions/SubscriptionListView.vue'
 import SubscriptionDetailView from '@/views/subscriptions/SubscriptionDetailView.vue'
-import SimulateSubscriptionView from '@/views/simulations/SimulateSubscriptionView.vue'
 import ManagementView from '../views/management/ManagementView.vue'
 import SellerListView from '../views/management/sellers/SellerListView.vue'
 import SellerDetailView from '../views/management/sellers/SellerDetailView.vue'
@@ -68,12 +67,7 @@ const router = createRouter({
       component: SubscriptionDetailView,
       meta: { requiresAuth: true },
     },
-    {
-      path: '/simulate',
-      name: 'simulate-subscription',
-      component: SimulateSubscriptionView,
-      meta: { requiresAuth: true },
-    },
+  // Rota de simulação removida
     // Rotas de autenticação - permanecem públicas para permitir login/registro
     {
       path: '/auth/login',
