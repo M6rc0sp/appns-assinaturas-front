@@ -49,7 +49,9 @@ onMounted(handleSetupRedirect);
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
-  padding: 2rem;
+  width: min(100%, 800px);
+  margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
 .setup-container {
@@ -57,7 +59,6 @@ onMounted(handleSetupRedirect);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 2rem;
-  max-width: 600px;
   width: 100%;
   text-align: center;
 }
