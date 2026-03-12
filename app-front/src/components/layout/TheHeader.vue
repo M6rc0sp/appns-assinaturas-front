@@ -30,7 +30,7 @@ function logout() {
   <header class="app-header">
     <div class="header-content">
       <RouterLink to="/" class="logo-container" @click="closeMenu">
-        <img alt="Logo Assinaturas" class="logo" src="@/assets/logo.svg" width="40" height="40" />
+        <img alt="Logo Assinaturas" class="logo" src="@/assets/logo.png" width="40" height="40" />
         <h1>Assinaturas App</h1>
       </RouterLink>
       
