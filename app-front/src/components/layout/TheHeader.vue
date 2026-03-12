@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import logoImg from '@/assets/logo.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -30,7 +31,7 @@ function logout() {
   <header class="app-header">
     <div class="header-content">
       <RouterLink to="/" class="logo-container" @click="closeMenu">
-        <img alt="Logo Assinaturas" class="logo" src="@/assets/logo.png" width="40" height="40" />
+        <img alt="Logo Assinaturas" class="logo" :src="logoImg" width="40" height="40" />
         <h1>Assinaturas App</h1>
       </RouterLink>
       
