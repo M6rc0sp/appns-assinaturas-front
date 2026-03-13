@@ -637,7 +637,7 @@ onMounted(async () => {
                 <div class="col-md-6">
                   <label for="birthdate" class="form-label fw-semibold">Data de nascimento</label>
                   <input type="date" class="form-control form-control-lg" id="birthdate" v-model="formData.birthdate"
-                    :class="{ 'is-invalid': errors.birthdate }">
+                    :class="{ 'is-invalid': errors.birthdate }" autocomplete="bday">
                   <div v-if="errors.birthdate" class="invalid-feedback">{{ errors.birthdate }}</div>
                 </div>
               </div>
@@ -793,14 +793,15 @@ onMounted(async () => {
                     <label for="cardNumber" class="form-label">Número do cartão</label>
                     <input type="text" class="form-control form-control-lg" id="cardNumber"
                       v-model="formData.creditCard.number" :class="{ 'is-invalid': errors.cardNumber }"
-                      placeholder="0000 0000 0000 0000">
+                      placeholder="0000 0000 0000 0000" autocomplete="cc-number">
                     <div v-if="errors.cardNumber" class="invalid-feedback">{{ errors.cardNumber }}</div>
                   </div>
 
                   <div class="col-12">
                     <label for="cardName" class="form-label">Nome impresso no cartão</label>
                     <input type="text" class="form-control form-control-lg" id="cardName"
-                      v-model="formData.creditCard.name" :class="{ 'is-invalid': errors.cardName }">
+                      v-model="formData.creditCard.name" :class="{ 'is-invalid': errors.cardName }"
+                      autocomplete="cc-name">
                     <div v-if="errors.cardName" class="invalid-feedback">{{ errors.cardName }}</div>
                   </div>
 
@@ -808,7 +809,7 @@ onMounted(async () => {
                     <label for="cardExpiry" class="form-label">Validade (MM/AA)</label>
                     <input type="text" class="form-control form-control-lg" id="cardExpiry"
                       v-model="formData.creditCard.expiry" :class="{ 'is-invalid': errors.cardExpiry }"
-                      placeholder="MM/AA">
+                      placeholder="MM/AA" autocomplete="cc-exp">
                     <div v-if="errors.cardExpiry" class="invalid-feedback">{{ errors.cardExpiry }}</div>
                   </div>
 
@@ -816,7 +817,7 @@ onMounted(async () => {
                     <label for="cardCVV" class="form-label">CVV</label>
                     <input type="text" class="form-control form-control-lg" id="cardCVV"
                       v-model="formData.creditCard.cvv" :class="{ 'is-invalid': errors.cardCVV }" placeholder="000"
-                      maxlength="4">
+                      maxlength="4" autocomplete="cc-csc">
                     <div v-if="errors.cardCVV" class="invalid-feedback">{{ errors.cardCVV }}</div>
                   </div>
                 </div>

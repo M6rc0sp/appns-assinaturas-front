@@ -184,6 +184,7 @@ onMounted(() => {
             id="birthDate" 
             v-model="formData.birthDate" 
             class="form-control"
+            autocomplete="bday"
           />
         </div>
 
